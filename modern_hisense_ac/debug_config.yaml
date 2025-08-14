@@ -1,0 +1,360 @@
+# Hisense AC ESPHome Debug Configuration
+# This configuration includes enhanced logging and diagnostic features
+# for troubleshooting and development purposes
+
+substitutions:
+  device_name: "hisense-ac-debug"
+  friendly_name: "Hisense AC Debug"
+
+# External Components
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [hisense_ac]
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -100
+    then:
+      - logger.log:
+          level: INFO
+          format: "=== Hisense AC Debug Mode Started ==="
+      - logger.log:
+          level: INFO
+          format: "Firmware Version: 2.0.0-debug"
+      - logger.log:
+          level: INFO
+          format: "Board: ESP32"
+      - delay: 2s
+      - logger.log:
+          level: INFO
+          format: "Initializing UART communication..."
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable verbose logging for debugging
+logger:
+  level: VERBOSE  # Maximum verbosity
+  baud_rate: 0    # Disable serial logging to avoid UART conflicts
+  logs:
+    # Component-specific log levels
+    sensor: DEBUG
+    climate: VERBOSE
+    uart: VERBOSE
+    uart_debug: VERBOSE
+    hisense_ac: VERBOSE
+    api: INFO
+    api.service: DEBUG
+    wifi: DEBUG
+    ota: INFO
+    switch: DEBUG
+    select: DEBUG
+    text_sensor: DEBUG
+
+# Enable Home Assistant API with debug
+api:
+  encryption:
+    key: !secret api_encryption_key
+  reboot_timeout: 0s  # Disable auto-reboot for debugging
+  services:
+    # Service to send raw UART command for testing
+    - service: send_raw_command
+      variables:
+        command: string
+      then:
+        - logger.log:
+            format: "Sending raw command: %s"
+            args: ['command.c_str()']
+        - uart.write: !lambda |-
+            std::vector<uint8_t> data;
+            // Parse hex string to bytes
+            for (size_t i = 0; i < command.length(); i += 2) {
+              std::string byteString = command.substr(i, 2);
+              uint8_t byte = (uint8_t) strtol(byteString.c_str(), nullptr, 16);
+              data.push_back(byte);
+            }
+            return data;
+    
+    # Service to request status update
+    - service: request_status
+      then:
+        - logger.log: "Requesting AC status update..."
+        - uart.write:
+            id: ac_uart
+            data: [0xF4, 0xF5, 0x00, 0x40, 0x0C, 0x00, 0x00, 0x01, 0x01, 0xFE, 0x01, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x01, 0xB3, 0xF4, 0xFB]
+
+# OTA updates
+ota:
+  - platform: esphome
+    password: !secret ota_password
+    on_begin:
+      then:
+        - logger.log: "OTA update starting..."
+    on_progress:
+      then:
+        - logger.log:
+            format: "OTA progress: %.1f%%"
+            args: ['x']
+    on_end:
+      then:
+        - logger.log: "OTA update completed successfully"
+    on_error:
+      then:
+        - logger.log:
+            level: ERROR
+            format: "OTA update failed with error code %d"
+            args: ['x']
+
+# WiFi configuration with status monitoring
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  # Enable fast connect for debugging
+  fast_connect: true
+  
+  # Manual IP can help with debugging
+  # manual_ip:
+  #   static_ip: 192.168.1.200
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  
+  # Access Point fallback for recovery
+  ap:
+    ssid: "Hisense-AC-Debug"
+    password: "debugmode123"
+    
+  on_connect:
+    - logger.log: "WiFi connected successfully"
+  
+  on_disconnect:
+    - logger.log:
+        level: WARN
+        format: "WiFi disconnected!"
+
+# Captive portal for emergency access
+captive_portal:
+
+# UART configuration with debug output
+uart:
+  id: ac_uart
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 512
+  debug:
+    direction: BOTH
+    dummy_receiver: false
+    after:
+      delimiter: [0xF4, 0xFB]
+    sequence:
+      - lambda: |-
+          // Log raw UART data in hex format
+          std::string hex_str;
+          for (size_t i = 0; i < bytes.size(); i++) {
+            char buf[5];
+            sprintf(buf, "%02X ", bytes[i]);
+            hex_str += buf;
+          }
+          
+          if (direction == uart::UART_DIRECTION_RX) {
+            ESP_LOGV("uart_rx", "RX: %s", hex_str.c_str());
+            // Check for valid frame headers
+            if (bytes.size() >= 2 && bytes[0] == 0xF4 && bytes[1] == 0xF5) {
+              ESP_LOGI("uart_rx", "Valid frame header detected");
+            }
+          } else {
+            ESP_LOGV("uart_tx", "TX: %s", hex_str.c_str());
+          }
+
+# Climate component using external component with debug
+climate:
+  - platform: hisense_ac
+    name: "${friendly_name}"
+    id: hisense_ac_climate
+    uart_id: ac_uart
+    compressor_frequency_sensor:
+      name: "Compressor Frequency"
+      id: compressor_frequency
+      filters:
+        - heartbeat: 30s
+    outdoor_temperature_sensor:
+      name: "Outdoor Temperature"
+      id: outdoor_temperature
+      filters:
+        - heartbeat: 60s
+    pipe_temperature_sensor:
+      name: "Pipe Temperature"
+      id: pipe_temperature
+      filters:
+        - heartbeat: 60s
+
+# Diagnostic sensors
+sensor:
+  # Debug diagnostic sensors
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    entity_category: diagnostic
+    update_interval: 60s
+  
+  # ESP32 internal temperature (if supported)
+  - platform: internal_temperature
+    name: "${friendly_name} CPU Temperature"
+    entity_category: diagnostic
+    update_interval: 60s
+  
+  # Free heap memory
+  - platform: template
+    name: "${friendly_name} Free Heap"
+    lambda: |-
+      return ESP.getFreeHeap();
+    unit_of_measurement: "bytes"
+    entity_category: diagnostic
+    update_interval: 30s
+  
+  # Packet counters
+  - platform: template
+    name: "${friendly_name} RX Packets"
+    id: rx_packet_counter
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    lambda: |-
+      return 0;  // Will be updated by tracking UART traffic
+  
+  - platform: template
+    name: "${friendly_name} TX Packets"
+    id: tx_packet_counter
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    lambda: |-
+      return 0;  // Will be updated by tracking UART traffic
+  
+  - platform: template
+    name: "${friendly_name} CRC Errors"
+    id: crc_error_counter
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    lambda: |-
+      return 0;  // Will be updated by the component
+
+# Debug test switches
+switch:
+  - platform: template
+    name: "${friendly_name} Send Status Request"
+    icon: mdi:refresh
+    entity_category: diagnostic
+    turn_on_action:
+      - logger.log: "Sending status request command..."
+      - uart.write:
+          id: ac_uart
+          data: [0xF4, 0xF5, 0x00, 0x40, 0x0C, 0x00, 0x00, 0x01, 0x01, 0xFE, 0x01, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x01, 0xB3, 0xF4, 0xFB]
+      - delay: 100ms
+      - lambda: |-
+          id(this).turn_off();
+  
+  - platform: template
+    name: "${friendly_name} Send Power On"
+    icon: mdi:power
+    entity_category: diagnostic
+    turn_on_action:
+      - logger.log: "Sending power on command..."
+      - uart.write:
+          id: ac_uart
+          data: [0xF4, 0xF5, 0x00, 0x40, 0x29, 0x00, 0x00, 0x01, 0x01, 0xFE, 0x01, 0x00, 0x00, 0x65, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF4, 0xFB]
+      - delay: 100ms
+      - lambda: |-
+          id(this).turn_off();
+  
+  - platform: template
+    name: "${friendly_name} Send Power Off"
+    icon: mdi:power-off
+    entity_category: diagnostic
+    turn_on_action:
+      - logger.log: "Sending power off command..."
+      - uart.write:
+          id: ac_uart
+          data: [0xF4, 0xF5, 0x00, 0x40, 0x29, 0x00, 0x00, 0x01, 0x01, 0xFE, 0x01, 0x00, 0x00, 0x65, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF4, 0xFB]
+      - delay: 100ms
+      - lambda: |-
+          id(this).turn_off();
+  
+  - platform: template
+    name: "${friendly_name} Debug Mode"
+    icon: mdi:bug
+    entity_category: diagnostic
+    optimistic: true
+    on_turn_on:
+      - logger.log: "Debug mode enabled"
+      - logger.set_level:
+          level: VERBOSE
+    on_turn_off:
+      - logger.log: "Debug mode disabled"
+      - logger.set_level:
+          level: INFO
+  
+  - platform: restart
+    name: "${friendly_name} Restart"
+    entity_category: diagnostic
+
+# Text sensors for debug information
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "${friendly_name} Connected SSID"
+      entity_category: diagnostic
+    mac_address:
+      name: "${friendly_name} MAC Address"
+      entity_category: diagnostic
+  
+  - platform: version
+    name: "${friendly_name} ESPHome Version"
+    entity_category: diagnostic
+  
+  - platform: template
+    name: "${friendly_name} Last Command"
+    id: last_command
+    entity_category: diagnostic
+    icon: mdi:console
+  
+  - platform: template
+    name: "${friendly_name} Last Response"
+    id: last_response
+    entity_category: diagnostic
+    icon: mdi:console-network
+  
+  - platform: template
+    name: "${friendly_name} AC Status"
+    id: ac_status_text
+    entity_category: diagnostic
+    lambda: |-
+      return "Waiting for status...";
+    update_interval: 10s
+
+# Binary sensors for status monitoring
+binary_sensor:
+  - platform: status
+    name: "${friendly_name} Connection Status"
+    entity_category: diagnostic
+  
+  - platform: template
+    name: "${friendly_name} AC Communication"
+    id: ac_communication_status
+    device_class: connectivity
+    entity_category: diagnostic
