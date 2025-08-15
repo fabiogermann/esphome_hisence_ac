@@ -4,6 +4,7 @@
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/core/hal.h"
 #include <vector>
 #include <queue>
 
@@ -81,6 +82,16 @@ struct DeviceStatus {
 };
 #pragma pack(pop)
 
+// Communication states for robust state machine
+enum class CommState {
+  STANDBY,
+  WAITING_FOR_STATUS_RESPONSE,
+  WAITING_FOR_CHANGE_CONFIRM,
+  AFTER_FAIL,
+  WAITING_FOR_MORE,
+  RESET
+};
+
 class HisenseClimate : public climate::Climate, public uart::UARTDevice, public Component {
  public:
   HisenseClimate(uart::UARTComponent *parent) : uart::UARTDevice(parent) {}
@@ -96,6 +107,13 @@ class HisenseClimate : public climate::Climate, public uart::UARTDevice, public 
   
   // Name setter
   void set_name(const std::string &name) { this->name_ = name; }
+  
+  // Flow control pin setter (for RS485)
+  void set_flow_control_pin(GPIOPin *pin) { this->flow_control_pin_ = pin; }
+  
+  // Display control
+  void set_display_enabled(bool enabled) { this->display_enabled_ = enabled; }
+  bool get_display_enabled() const { return this->display_enabled_; }
 
   // Sensor setters for external access
   void set_compressor_frequency_sensor(sensor::Sensor *sensor) {
@@ -151,15 +169,24 @@ class HisenseClimate : public climate::Climate, public uart::UARTDevice, public 
   bool eco_mode_{false};
   bool quiet_mode_{false};
   bool led_enabled_{true};
+  bool display_enabled_{true};  // Display control
   SleepMode sleep_mode_{SLEEP_OFF};
+  
+  // Communication state machine
+  CommState comm_state_{CommState::STANDBY};
+  uint32_t last_state_change_{0};
   
   // Communication state
   std::vector<uint8_t> rx_buffer_;
   std::queue<std::vector<uint8_t>> tx_queue_;
   uint32_t last_query_time_{0};
   uint32_t last_command_time_{0};
+  uint32_t last_received_time_{0};
   bool waiting_for_response_{false};
   uint8_t retry_count_{0};
+  
+  // Flow control pin for RS485
+  GPIOPin *flow_control_pin_{nullptr};
   
   // Sensors
   sensor::Sensor *compressor_frequency_sensor_{nullptr};
@@ -169,8 +196,15 @@ class HisenseClimate : public climate::Climate, public uart::UARTDevice, public 
   // Constants
   static constexpr uint32_t QUERY_INTERVAL_MS = 2000;
   static constexpr uint32_t COMMAND_TIMEOUT_MS = 500;
+  static constexpr uint32_t COMM_TIMEOUT_MS = 10000;  // 10 seconds no comm = reset
+  static constexpr uint32_t FAIL_RECOVERY_MS = 8000;  // 8 seconds recovery after fail
   static constexpr uint8_t MAX_RETRIES = 3;
   static constexpr size_t MAX_BUFFER_SIZE = 256;
+  
+  // Helper methods for state machine
+  void change_comm_state(CommState new_state);
+  void handle_comm_timeout();
+  void send_with_flow_control(const std::vector<uint8_t> &data);
 };
 
 }  // namespace hisense_ac

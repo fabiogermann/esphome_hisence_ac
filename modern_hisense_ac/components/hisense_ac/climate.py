@@ -3,6 +3,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import climate, uart, sensor
+from esphome import pins
 from esphome.const import (
     CONF_ID,
     CONF_UART_ID,
@@ -30,6 +31,8 @@ HisenseClimate = hisense_ac_ns.class_(
 CONF_COMPRESSOR_FREQUENCY_SENSOR = "compressor_frequency_sensor"
 CONF_OUTDOOR_TEMPERATURE_SENSOR = "outdoor_temperature_sensor"
 CONF_PIPE_TEMPERATURE_SENSOR = "pipe_temperature_sensor"
+CONF_FLOW_CONTROL_PIN = "flow_control_pin"
+CONF_DISPLAY_ENABLED = "display_enabled"
 
 # Configuration schema - simplified without switches for now
 CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
@@ -56,6 +59,8 @@ CONFIG_SCHEMA = climate.CLIMATE_SCHEMA.extend(
             state_class=STATE_CLASS_MEASUREMENT,
             icon=ICON_THERMOMETER,
         ),
+        cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
+        cv.Optional(CONF_DISPLAY_ENABLED, default=True): cv.boolean,
     }
 ).extend(cv.COMPONENT_SCHEMA).extend(uart.UART_DEVICE_SCHEMA)
 
@@ -77,6 +82,15 @@ async def to_code(config):
     # Set name if provided
     if CONF_NAME in config:
         cg.add(var.set_name(config[CONF_NAME]))
+    
+    # Configure flow control pin for RS485
+    if CONF_FLOW_CONTROL_PIN in config:
+        pin = await cg.gpio_pin_expression(config[CONF_FLOW_CONTROL_PIN])
+        cg.add(var.set_flow_control_pin(pin))
+    
+    # Configure display control
+    if CONF_DISPLAY_ENABLED in config:
+        cg.add(var.set_display_enabled(config[CONF_DISPLAY_ENABLED]))
     
     # Configure optional sensors
     if CONF_COMPRESSOR_FREQUENCY_SENSOR in config:
