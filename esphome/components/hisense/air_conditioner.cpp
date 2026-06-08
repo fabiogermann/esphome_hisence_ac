@@ -443,37 +443,70 @@ bool AirConditioner::try_extract_frame_(std::vector<uint8_t> &payload_out) {
                              this->rx_buffer_.begin() + 1);
       continue;
     }
-    uint32_t sum = 0;
-    for (size_t i = 2; i + 2 < footer_idx; i++) {
-      sum += this->rx_buffer_[i];
+    // Helper lambda: try to validate a frame ending at the given footer index.
+    // Returns true and populates payload_out / consumes bytes if it validates.
+    auto try_validate_at = [this, &payload_out](size_t f) -> bool {
+      if (f < 4) return false;
+      uint32_t s = 0;
+      for (size_t i = 2; i + 2 < f; i++) s += this->rx_buffer_[i];
+      s &= 0xFFFF;
+      const uint8_t hi = (s >> 8) & 0xFF;
+      const uint8_t lo = s & 0xFF;
+      if (hi != this->rx_buffer_[f - 2] ||
+          lo != this->rx_buffer_[f - 1]) {
+        return false;
+      }
+      payload_out.assign(this->rx_buffer_.begin() + 2,
+                         this->rx_buffer_.begin() + (f - 2));
+      this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                             this->rx_buffer_.begin() + f + 2);
+      return true;
+    };
+
+    if (try_validate_at(footer_idx)) {
+      return true;
     }
-    sum &= 0xFFFF;
-    const uint8_t expected_hi = (sum >> 8) & 0xFF;
-    const uint8_t expected_lo = sum & 0xFF;
+
+    // 3a) Doubled-F4 recovery. Some AC firmwares occasionally emit an extra
+    // 0xF4 byte just before the footer, yielding ... F4 F4 FB on the wire.
+    // If the byte preceding the F4 of the footer is also F4, treat it as a
+    // duplicate and retry with footer shifted back by one.
+    if (footer_idx >= 3 && this->rx_buffer_[footer_idx - 1] == 0xF4) {
+      // Layout: ... [cs_hi] [cs_lo] [F4] [F4] [FB]
+      // Original footer_idx points at the first F4 of "F4 FB". If we move
+      // it back by 1, the new footer pair is (F4, FB at idx footer_idx,
+      // footer_idx+1) -- wait, that's the same. We instead need to drop one
+      // F4 byte from the buffer and revalidate at the same logical end.
+      // Easiest: erase the byte at (footer_idx-1) and let the loop retry.
+      ESP_LOGV(TAG, "Doubled-F4 detected before footer - retrying");
+      this->rx_buffer_.erase(this->rx_buffer_.begin() + (footer_idx - 1));
+      // After erase, the F4 FB pair is now at (footer_idx-1, footer_idx).
+      if (try_validate_at(footer_idx - 1)) {
+        return true;
+      }
+    }
+
+    // Real checksum failure. Log and resync past this header.
+    const uint32_t sum_now = [this, footer_idx]() {
+      uint32_t s = 0;
+      for (size_t i = 2; i + 2 < footer_idx; i++) s += this->rx_buffer_[i];
+      return s & 0xFFFF;
+    }();
+    const uint8_t expected_hi = (sum_now >> 8) & 0xFF;
+    const uint8_t expected_lo = sum_now & 0xFF;
     const uint8_t provided_hi = this->rx_buffer_[footer_idx - 2];
     const uint8_t provided_lo = this->rx_buffer_[footer_idx - 1];
-
-    if (expected_hi != provided_hi || expected_lo != provided_lo) {
-      this->checksum_error_count_++;
-      ESP_LOGD(TAG,
-               "Checksum error #%u - expected 0x%02x 0x%02x, got 0x%02x 0x%02x",
-               static_cast<unsigned>(this->checksum_error_count_),
-               expected_hi, expected_lo, provided_hi, provided_lo);
-      // The closed candidate is bogus. It may still contain an embedded real
-      // header further along; advance past just this header so we keep
-      // scanning the absorbed bytes.
-      this->rx_buffer_.erase(this->rx_buffer_.begin(),
-                             this->rx_buffer_.begin() + 1);
-      continue;
-    }
-
-    // 4) Frame is valid. Extract the body (between header and checksum) and
-    //    pop the consumed bytes (including the trailing footer).
-    payload_out.assign(this->rx_buffer_.begin() + 2,
-                       this->rx_buffer_.begin() + (footer_idx - 2));
+    this->checksum_error_count_++;
+    ESP_LOGD(TAG,
+             "Checksum error #%u - expected 0x%02x 0x%02x, got 0x%02x 0x%02x",
+             static_cast<unsigned>(this->checksum_error_count_),
+             expected_hi, expected_lo, provided_hi, provided_lo);
+    // The closed candidate is bogus. It may still contain an embedded real
+    // header further along; advance past just this header so we keep
+    // scanning the absorbed bytes.
     this->rx_buffer_.erase(this->rx_buffer_.begin(),
-                           this->rx_buffer_.begin() + footer_idx + 2);
-    return true;
+                           this->rx_buffer_.begin() + 1);
+    continue;
   }
   return false;
 }

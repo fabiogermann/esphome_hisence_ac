@@ -83,10 +83,13 @@ protected:
   /// causes the unit to drop queries and triggers the comm-timeout watchdog.
   static constexpr uint32_t QUERY_PERIOD_MS = 5000;
 
-  /// Comm-watchdog timeout: how long we tolerate no inbound bytes before
-  /// declaring the link dead and entering the backoff state. Real units
-  /// sometimes go 15-25s without a response when in OFF mode.
-  static constexpr uint32_t COMM_TIMEOUT_MS = 15000;
+  /// Comm-watchdog timeout: how long we wait for a response to an in-flight
+  /// query before declaring it lost and triggering a backoff retry. Empirically
+  /// the AC's indoor MCU answers within 100-700 ms when it answers at all;
+  /// 5 s leaves wide margin while keeping the failure path responsive.
+  /// (Used by the standby->after_fail transition; the system can still wait
+  /// many seconds between requests via QUERY_PERIOD_MS.)
+  static constexpr uint32_t COMM_TIMEOUT_MS = 5000;
 
   /// Initial retry delay after a comm timeout. Backs off further with each
   /// consecutive error (see loop()).

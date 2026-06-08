@@ -144,6 +144,28 @@ def parse_frame(buf: bytes) -> Frame:
     return Frame(payload=body, raw=buf, checksum=embedded)
 
 
+def parse_frame_lenient(buf: bytes) -> Frame:
+    """Parse ``buf`` with one recovery pass for the ``F4 F4 FB`` corruption.
+
+    Some Hisense indoor units occasionally emit a doubled ``0xF4`` byte
+    immediately before the footer, producing ``... cs_hi cs_lo F4 F4 FB`` on
+    the wire (frame is 1 byte longer than nominal). This helper mirrors the
+    same recovery the C++ extractor performs: if strict parsing fails on a
+    buffer whose final 3 bytes are ``F4 F4 FB``, drop one F4 and retry.
+    All other corruption modes still raise :class:`FrameError`.
+    """
+    try:
+        return parse_frame(buf)
+    except FrameError:
+        pass
+    # Doubled-F4 recovery: ... F4 F4 FB
+    if len(buf) >= 9 and buf[-3:] == b"\xF4\xF4\xFB":
+        candidate = buf[:-3] + b"\xF4\xFB"
+        return parse_frame(candidate)
+    # Re-raise the original (strict) error for visibility.
+    return parse_frame(buf)
+
+
 def find_frame_end(buf: bytes, start: int = 0) -> Optional[int]:
     """Return the index just past the next ``F4 FB`` footer, or ``None``."""
     idx = buf.find(FOOTER, start)

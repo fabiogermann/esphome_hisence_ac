@@ -70,6 +70,17 @@
       "length": 49,
       "source": "output.txt 08:59:19",
       "description": "Stray bytes captured between frames - mostly zeros plus footer. Parser must drop without crashing."
+    },
+    {
+      "name": "doubled_f4_corruption",
+      "type": "response",
+      "direction": "rx",
+      "hex": "F4F50140490100FE010101010066000101002815150D808000015100000000000000000000800500001515152123242F0000FE0000000003E80000000A000000000000000000000000000000000006F4F4F4FB",
+      "expected_checksum": null,
+      "recovered_checksum": "06F4",
+      "length": 83,
+      "source": "output.txt 13:32:14.082 (m0258 log)",
+      "description": "Real corruption seen on the wire: an extra 0xF4 byte injected between the checksum bytes and the F4 FB footer, yielding ...06 F4 F4 F4 FB. The strict parse_frame rejects this (expected 0x06fa got 0xf4f4). parse_frame_lenient MUST recover by dropping one F4 and revalidating - the true frame is the 82-byte version ending '06 F4 F4 FB' with checksum 0x06F4."
     }
   ],
   "mode_encoding": {

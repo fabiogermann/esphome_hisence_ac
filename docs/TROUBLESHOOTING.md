@@ -39,15 +39,46 @@ between garbage are still recognised.
 Checksum error #N - expected: 0xHH 0xHH, got: 0xHH 0xHH
 ```
 
-Verify the wiring: TX↔RX must be crossed (AC pin 2 → ESP RX, AC pin 3 → ESP
-TX). Use the test suite to confirm the checksum algorithm itself is correct:
+The Hisense indoor MCU is known to corrupt frames at the physical layer. Two
+distinct corruption modes have been seen in real captures:
+
+1. **Single byte dropped** — the computed checksum is off by exactly the value
+   of the missing byte (typical: 0x80 difference). This is caused by the ESP
+   side missing a UART byte, almost always because some other ESPHome
+   component (e.g. `uart.debug` or a verbose logger) is blocking the loop for
+   longer than ~1 ms while bytes are still arriving at 9600 baud. The fix is
+   to disable `uart.debug` in production and keep the logger at `INFO`. The
+   committed `sampleconfig.yaml` already does both.
+
+2. **Doubled `0xF4` before footer** — the frame ends `… cs_hi cs_lo F4 F4 FB`
+   (one byte longer than nominal) and the parser sees `F4 F4` as the checksum
+   bytes. The C++ extractor and the Python `parse_frame_lenient` helper now
+   recover from this automatically by dropping one of the doubled F4s and
+   revalidating. The original captured frame fixture is preserved at
+   `tests/data/frames.json -> doubled_f4_corruption` with the corresponding
+   regression test.
+
+Verify the algorithm itself is correct:
 
 ```bash
 make test
 ```
 
-If `test_checksum.py` is green, the algorithm is right and the on-wire bytes
-are being corrupted somewhere between the AC and the ESP.
+If `test_checksum.py` and `test_frame_parsing.py` are green, the algorithm is
+right and any remaining failures are on-wire corruption that the resync-safe
+parser will recover from on the next clean frame.
+
+## Symptom: long stretches of "Communication timeout"
+
+If the AC is OFF the indoor MCU sometimes ignores queries for several seconds.
+The defaults err on the patient side:
+
+- `QUERY_PERIOD_MS = 5000` — one query every 5 s.
+- `COMM_TIMEOUT_MS = 5000` — give up on an in-flight query after 5 s.
+- Backoff escalates `2 → 4 → 7 → 10` seconds with consecutive failures.
+
+These are constants in `esphome/components/hisense/air_conditioner.h` if you
+need to tune them for a different unit.
 
 ## Symptom: sensors stuck at 0
 
@@ -59,17 +90,21 @@ is stuck. Fix the parser first — see the first symptom above.
 
 - GPIO1 and GPIO3 are the only available UART pins, so serial logging is
   disabled (`logger: baud_rate: 0`) and all logs go over Wi-Fi.
-- `rx_buffer_size: 256` is required to fit a full 82-byte response plus
-  surrounding noise without overflowing.
+- `rx_buffer_size: 512` is required to fit a full 82-byte response plus
+  surrounding noise without overflowing the ESPHome UART software buffer.
+  The hardware FIFO on ESP8266 is only ~128 B, so any blocking loop
+  iteration over a few ms will drop bytes regardless of the SW buffer size.
 - The ESP-01 is slow; bytes often arrive one at a time. The pure-Python
   `StreamingParser` tests with a byte-at-a-time feed to mirror this.
 
 ## Reading the wire
 
-The sample config enables uart_debug with `delimiter: [0xF4, 0xFB]`, which
-splits each log line at the trailing footer. Lines beginning with `<<<` are
-RX (AC → ESP); lines beginning with `>>>` are TX (ESP → AC). A clean status
-response should look like:
+The sample config ships with `uart.debug` **commented out** because logging
+every frame synchronously through ESPHome's logger is a leading cause of byte
+drops on ESP8266. For one-shot debugging you can re-enable it: uncomment the
+`debug:` block in `sampleconfig.yaml` and reflash. Lines beginning with `<<<`
+are RX (AC → ESP); lines beginning with `>>>` are TX (ESP → AC). A clean
+status response should look like:
 
 ```
 <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80
@@ -77,4 +112,6 @@ response should look like:
 ```
 
 If the leading `F4 F5` is missing or the line ends without `F4 FB`, the
-parser will reject the frame.
+parser will reject the frame. Disable `uart.debug` again once you are done
+investigating — leaving it on in production causes the very corruption you
+were trying to debug.
