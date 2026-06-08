@@ -51,10 +51,23 @@ below are relative to the body, i.e. `body[0]` is the first byte after `F4 F5`.
 | `body[17]`  | Target temperature, °C (raw integer) |
 | `body[18]`  | Indoor air temperature, °C |
 | `body[19]`  | Indoor coil temperature, °C |
-| `body[21]`  | Indoor humidity, % |
+| `body[21]`  | Static flag byte (always observed as `0x80` — **not** humidity) |
 | `body[33]`  | Swing bits — see [Swing](#swing) |
-| `body[40]`  | Outdoor air temperature, °C |
-| `body[41]`  | Outdoor coil temperature, °C |
+| `body[42]`  | Outdoor air temperature, °C |
+| `body[43]`  | Outdoor coil temperature, °C |
+| `body[44]`  | Outdoor defrost / sub-coil temperature, °C (not exposed) |
+| `body[45]`  | Compressor / heatsink temperature, °C (not exposed) |
+
+> **Note on humidity.** The original community implementations read
+> `body[21]` as an indoor humidity percentage. On every observed Hisense
+> status frame from real hardware that byte is a static `0x80` (= 128 in
+> decimal — the cause of the long-standing "Indoor Humidity 128 %" bug).
+> This driver therefore does **not** expose an indoor humidity sensor.
+>
+> **Note on outdoor temperatures.** Earlier versions read
+> `body[40]` / `body[41]`, but on real captures those bytes are always
+> `0x00` (hence "Outdoor Temperature 0 °C" in HA). The actual outdoor
+> sensor block lives at `body[42..45]`.
 
 ## Mode byte
 

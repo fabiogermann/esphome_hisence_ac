@@ -64,16 +64,52 @@ def test_decode_publishes_all_sub_sensors(well_formed_frames):
     state = protocol.decode_status_payload(_payload(case))
 
     # Every numeric attribute the C++ update_sub_sensor_ writes should be set.
+    # Indoor humidity is intentionally absent: see protocol.decode_status_payload.
     for field_name in (
         "indoor_temp_c",
         "indoor_coil_temp_c",
-        "indoor_humidity",
         "outdoor_temp_c",
         "outdoor_coil_temp_c",
     ):
         assert hasattr(state, field_name), field_name
         # All values are bytes so 0..255 - just confirm they're integers.
         assert isinstance(getattr(state, field_name), int)
+
+    # And confirm humidity is gone.
+    assert not hasattr(state, "indoor_humidity")
+
+
+def test_byte21_is_static_flag_not_humidity(well_formed_frames):
+    """body[21] is 0x80 on every observed status frame - it is NOT humidity.
+
+    Regression guard for the "Indoor Humidity 128 %" bug.
+    """
+    for case in well_formed_frames:
+        if not case["name"].startswith("status_response"):
+            continue
+        payload = _payload(case)
+        assert payload[21] == 0x80, (
+            f"{case['name']}: payload[21]=0x{payload[21]:02x} "
+            "(expected static 0x80 flag - did the protocol change?)"
+        )
+
+
+def test_outdoor_temps_use_body_42_43(well_formed_frames):
+    """Outdoor temperatures live at body[42..43], not body[40..41].
+
+    Regression guard for the "Outdoor Temperature 0 °C" bug: the
+    previous mapping read body[40]/body[41] which are always zero on
+    observed payloads.
+    """
+    for case in well_formed_frames:
+        if not case["name"].startswith("status_response"):
+            continue
+        payload = _payload(case)
+        # body[40] and body[41] are always zero on captured frames.
+        assert payload[40] == 0x00 and payload[41] == 0x00
+        # body[42] and body[43] hold plausible °C values (>= 10, < 60).
+        assert 10 <= payload[42] < 60, payload[42]
+        assert 10 <= payload[43] < 60, payload[43]
 
 
 def test_decode_rejects_short_payload():

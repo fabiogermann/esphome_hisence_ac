@@ -383,7 +383,6 @@ class ClimateState:
     target_temp_c: int
     indoor_temp_c: int
     indoor_coil_temp_c: int
-    indoor_humidity: int
     outdoor_temp_c: int
     outdoor_coil_temp_c: int
     fan_mode: Optional[str]
@@ -395,8 +394,14 @@ def decode_status_payload(payload: bytes) -> ClimateState:
 
     ``payload`` is the slice between the ``F4 F5`` header and the checksum -
     exactly what ``AirConditioner::decode_message`` receives.
+
+    NOTE on byte offsets: ``body[21]`` was previously believed to be indoor
+    humidity, but on every observed Hisense status frame it is a static
+    ``0x80`` flag byte. Outdoor temperature/coil values were also off by
+    two bytes - they live in the ``body[42..45]`` block on real 76-byte
+    payloads (``body[40]`` and ``body[41]`` are always ``0x00``).
     """
-    if len(payload) < 42:
+    if len(payload) < 44:
         raise FrameError(f"payload too short to decode: {len(payload)} bytes")
 
     mode_byte = payload[16]
@@ -408,9 +413,8 @@ def decode_status_payload(payload: bytes) -> ClimateState:
         target_temp_c=payload[17],
         indoor_temp_c=payload[18],
         indoor_coil_temp_c=payload[19],
-        indoor_humidity=payload[21],
-        outdoor_temp_c=payload[40],
-        outdoor_coil_temp_c=payload[41],
+        outdoor_temp_c=payload[42],
+        outdoor_coil_temp_c=payload[43],
         fan_mode=decode_fan_speed(payload[14]),
         swing_mode=decode_swing(payload[33]),
     )

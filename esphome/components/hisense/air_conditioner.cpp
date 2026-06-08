@@ -521,16 +521,15 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
                        static_cast<float>(payload[18]));
     update_sub_sensor_(SubSensorType::INDOOR_COIL_TEMPERATURE,
                        static_cast<float>(payload[19]));
-
-    update_sub_sensor_(SubSensorType::INDOOR_HUMIDITY,
-                       static_cast<float>(payload[21]));
+    // NOTE: payload[21] is always 0x80 on observed Hisense status frames;
+    // it is a flag byte, not humidity. Indoor humidity is not exposed by
+    // this protocol. The INDOOR_HUMIDITY sub-sensor has been removed.
+    // Outdoor temperatures live in the body[42..45] block on observed
+    // 76-byte status payloads (40/41 are zeros).
     update_sub_sensor_(SubSensorType::OUTDOOR_TEMPERATURE,
-                       static_cast<float>(payload[40]));
+                       static_cast<float>(payload[42]));
     update_sub_sensor_(SubSensorType::OUTDOOR_COIL_TEMPERATURE,
-                       static_cast<float>(payload[41]));
-
-    //  update_sub_sensor_(SubSensorType::OUTDOOR_TEMPERATURE,
-    //  static_cast<float>(payload[41])); //OutDoor coil?
+                       static_cast<float>(payload[43]));
   }
 #endif
 

@@ -97,10 +97,6 @@ sensor:
       name: Indoor Temperature
   - platform: hisense
     hisense_id: hisense_ac
-    indoor_humidity:
-      name: Indoor Humidity
-  - platform: hisense
-    hisense_id: hisense_ac
     outdoor_temperature:
       name: Outdoor Temperature
 

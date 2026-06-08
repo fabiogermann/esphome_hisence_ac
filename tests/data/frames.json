@@ -32,6 +32,16 @@
       "description": "Variant of the previous frame with one byte different"
     },
     {
+      "name": "status_response_live_2026",
+      "type": "response",
+      "direction": "rx",
+      "hex": "F4F50140490100FE010101010066000100003015181580800001010000000000000000000000010000000000161514280000FC00000000000000000000000000000000000000000000000000000004CCF4FB",
+      "expected_checksum": "04CC",
+      "length": 82,
+      "source": "live log 11:33:00 (post-resync-fix capture)",
+      "description": "Live status response captured after the resync-safe parser fix. body[18]=0x18=24C indoor, body[42,43]=22/21C outdoor, body[21]=0x80 (static flag, not humidity)"
+    },
+    {
       "name": "truncated_frame_bug",
       "type": "response",
       "direction": "rx",
