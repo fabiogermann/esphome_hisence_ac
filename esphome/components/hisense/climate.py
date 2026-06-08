@@ -20,11 +20,13 @@ hisense_ac_ns = cg.esphome_ns.namespace("hisense").namespace("ac")
 AirConditioner = hisense_ac_ns.class_(
     "AirConditioner", uart.UARTDevice, cg.Component, climate.Climate
 )
+
 CONF_HISENSE_ID = "hisense_id"
 
 
 CONFIG_SCHEMA = cv.All(
-    climate.CLIMATE_SCHEMA.extend(
+#    climate.CLIMATE_SCHEMA.extend(
+    climate.climate_schema(AirConditioner).extend(
         {
             cv.GenerateID(): cv.declare_id(AirConditioner),
             cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
@@ -34,6 +36,24 @@ CONFIG_SCHEMA = cv.All(
     .extend(cv.COMPONENT_SCHEMA),
     cv.only_with_arduino,
 )
+
+# CONFIG_SCHEMA = cv.All(
+#     climate.climate_schema(
+#         supports_action=True,
+#         supports_mode=True,
+#         supports_fan_mode=True,
+#         supports_swing_mode=True,
+#         supports_target_temperature=True,
+#     ).extend(
+#         {
+#             cv.GenerateID(): cv.declare_id(AirConditioner),
+#             cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
+#         }
+#     )
+#     .extend(uart.UART_DEVICE_SCHEMA)
+#     .extend(cv.COMPONENT_SCHEMA),
+#     cv.only_with_arduino,
+# )
 
 
 def validate_visual(config):

@@ -12,19 +12,22 @@ void AirConditioner::setup() {
   }
   this->last_status_change = millis();
   this->status = Status::standby;
+  this->checksum_error_count_ = 0;
+  this->consecutive_errors_ = 0;
 }
 void AirConditioner::loop() {
   if (millis() - this->last_extra_log_print > 3000) {
     print_extra_log_in_this_loop = true;
     this->last_extra_log_print = millis();
   } else {
-    print_extra_log_in_this_loop = true;
+    print_extra_log_in_this_loop = false;
   }
 
-  if (millis() - this->last_recived_ > 10000 &&
-      millis() - this->last_status_change > 10000) {
-    ESP_LOGD(TAG, "Stuck reset error");
+  if (millis() - this->last_recived_ > 8000 &&
+      millis() - this->last_status_change > 8000) {
+    ESP_LOGD(TAG, "Communication timeout - resetting");
     this->rx_buffer_.clear();
+    this->consecutive_errors_ = 0;
     change_status(Status::after_fail);
     return;
   }
@@ -33,21 +36,22 @@ void AirConditioner::loop() {
     this->rx_buffer_.clear();
     uint8_t byte;
     while (available() && read_byte(&byte)) {
-      flush();
+      // Flush any remaining bytes
+    }
+    flush();
+
+    auto time_since_fail = millis() - last_status_change;
+    auto retry_delay = (consecutive_errors_ > 3) ? 4000 : 2000;
+
+    if (time_since_fail < retry_delay) {
+      if (print_extra_log_in_this_loop)
+        ESP_LOGD(TAG, "Waiting %d ms before retry (errors: %d)",
+                 retry_delay - time_since_fail, consecutive_errors_);
+      return;
     }
 
-    auto before_next_try = millis() - last_status_change > 8000;
-
-    if (print_extra_log_in_this_loop)
-      ESP_LOGD(TAG,
-               "Waiting %d before asking for status after communitation fail.",
-               before_next_try);
-
-    if (before_next_try <= 0) {
-      ESP_LOGD(TAG, "Reset status.");
-      change_status(Status::standby);
-    }
-
+    ESP_LOGD(TAG, "Retrying communication");
+    change_status(Status::standby);
     return;
   }
 
@@ -58,7 +62,7 @@ void AirConditioner::loop() {
   }
 
   if (millis() - this->last_recived_ > 2000 && status == Status::standby) {
-    ESP_LOGD(TAG, "Requsting status.");
+    ESP_LOGD(TAG, "Requesting status");
     std::vector<uint8_t> requst_status{0xF4, 0xF5, 0x00, 0x40, 0x0C, 0x00,
                                        0x00, 0x01, 0x01, 0xFE, 0x01, 0x00,
                                        0x00, 0x66, 0x00, 0x00, 0x00};
@@ -70,28 +74,47 @@ void AirConditioner::loop() {
   }
 
   int available_to_read = 0;
-  while ((available_to_read = this->available())) {
-    std::vector<uint8_t> rec_buffor{};
-    rec_buffor.resize(available_to_read, 0);
+  while ((available_to_read = this->available()) > 0) {
+    int chunk_size = std::min(available_to_read, 64);
+    std::vector<uint8_t> rec_buffer;
+    rec_buffer.resize(chunk_size, 0);
 
-    this->read_array(&rec_buffor[0], available_to_read);
-    this->rx_buffer_.insert(this->rx_buffer_.end(), rec_buffor.begin(),
-                            rec_buffor.end());
+    this->read_array(&rec_buffer[0], chunk_size);
+    this->rx_buffer_.insert(this->rx_buffer_.end(), rec_buffer.begin(),
+                            rec_buffer.end());
+
+    if (this->rx_buffer_.size() > 200) {
+      ESP_LOGW(TAG, "RX buffer overflow - clearing");
+      this->rx_buffer_.clear();
+      this->consecutive_errors_++;
+      change_status(Status::after_fail);
+      return;
+    }
 
     const auto parse_status = this->parse_ac_message_byte_();
     this->last_recived_ = millis();
+    
     switch (parse_status) {
     case ParseStatus::PARSE_ERROR:
-      ESP_LOGD(TAG, "Parse error");
+      ESP_LOGD(TAG, "Parse error (consecutive: %d)", consecutive_errors_);
       this->rx_buffer_.clear();
-      change_status(Status::after_fail);
+      this->consecutive_errors_++;
+      
+      if (consecutive_errors_ > 5) {
+        ESP_LOGW(TAG, "Too many consecutive errors - taking extended break");
+        change_status(Status::after_fail);
+      } else {
+        change_status(Status::standby);
+      }
       return;
+      
     case ParseStatus::PARSE_OK:
       this->rx_buffer_.clear();
+      this->consecutive_errors_ = 0;
       change_status(Status::standby);
       return;
+      
     case ParseStatus::NOT_FULL:
-      change_status(Status::waiting_for_more);
       break;
     }
   }
@@ -274,10 +297,38 @@ ParseStatus AirConditioner::parse_ac_message_byte_() {
     return ParseStatus::PARSE_ERROR;
   }
 
-  std::vector<uint8_t> payload(rx_buffer_.begin() + 2, rx_buffer_.end() - 4);
-  if (at > 8 && this->rx_buffer_[at] == 0xFB &&
-      this->rx_buffer_[at - 1] == 0xF4) {
+  bool is_status_response = false;
+  if (this->rx_buffer_.size() >= 4) {
+    is_status_response = (this->rx_buffer_[2] == 0x01 && this->rx_buffer_[3] == 0x40);
+  }
 
+  if (is_status_response) {
+    const size_t expected_size = 82;
+    if (this->rx_buffer_.size() < expected_size) {
+      return ParseStatus::NOT_FULL;
+    }
+    
+    if (this->rx_buffer_.size() > expected_size + 10) {
+      ESP_LOGW(TAG, "Frame too large (%d bytes) - likely corrupted", this->rx_buffer_.size());
+      return ParseStatus::PARSE_ERROR;
+    }
+  }
+
+  std::vector<uint8_t> payload(rx_buffer_.begin() + 2, rx_buffer_.end() - 4);
+  bool found_end = false;
+  
+  if (at > 8) {
+    if (this->rx_buffer_[at] == 0xFB && this->rx_buffer_[at - 1] == 0xF4) {
+      found_end = true;
+    } else if (is_status_response && this->rx_buffer_.size() >= 82) {
+      if (this->rx_buffer_[80] == 0xF4 && this->rx_buffer_[81] == 0xFB) {
+        found_end = true;
+        at = 81;
+      }
+    }
+  }
+
+  if (found_end) {
     std::vector<uint8_t> payload_for_crc(rx_buffer_.begin(),
                                          rx_buffer_.end() - 4);
 
@@ -291,23 +342,33 @@ ParseStatus AirConditioner::parse_ac_message_byte_() {
     uint8_t provided_cr2 = rx_buffer_[at - 2];
 
     if (cr1 != provided_cr1 || cr2 != provided_cr2) {
-      ESP_LOGD(TAG, "Not valid checksum, expected: 0x%x 0x%x, got 0x%x 0x%x.",
-               cr1, cr2, provided_cr1, provided_cr2);
+      this->checksum_error_count_++;
+      ESP_LOGD(TAG, "Checksum error #%d - expected: 0x%02x 0x%02x, got: 0x%02x 0x%02x",
+               checksum_error_count_, cr1, cr2, provided_cr1, provided_cr2);
+      
+      if (checksum_error_count_ <= 3 || checksum_error_count_ % 10 == 0) {
+        ESP_LOGD(TAG, "Corrupted frame: %s", format_hex_pretty(rx_buffer_).c_str());
+      }
+      
       return ParseStatus::PARSE_ERROR;
     }
   } else {
-    ESP_LOGD(TAG, "Not found end sequence yet at: %d.", at);
+    static uint32_t last_log = 0;
+    if (millis() - last_log > 1000) {
+      ESP_LOGD(TAG, "End sequence not found yet (size: %d)", this->rx_buffer_.size());
+      last_log = millis();
+    }
     return ParseStatus::NOT_FULL;
   }
 
-  ESP_LOGD(TAG, "Parsing message that seem to be OK: %s",
-           format_hex_pretty(payload).c_str());
+  ESP_LOGD(TAG, "Parsing OK message: %s (%d)",
+           format_hex_pretty(payload).c_str(), payload.size());
   decode_message(payload);
 
   if (waiting_for_response) {
     waiting_for_response = 0;
   } else {
-    ESP_LOGD(TAG, "Not expected");
+    ESP_LOGD(TAG, "Unexpected response received");
   }
 
   return ParseStatus::PARSE_OK;
@@ -316,6 +377,7 @@ ParseStatus AirConditioner::parse_ac_message_byte_() {
 void AirConditioner::dump_config() {
   ESP_LOGCONFIG(TAG, "Hisense:");
   LOG_PIN("  Flow Control Pin: ", this->flow_control_pin_);
+  ESP_LOGCONFIG(TAG, "  Checksum errors: %d", this->checksum_error_count_);
 }
 
 void AirConditioner::send_raw(const std::vector<uint8_t> &payload) {

@@ -71,6 +71,9 @@ protected:
   uint32_t last_status_change{0};
   uint32_t last_extra_log_print{0};
   bool print_extra_log_in_this_loop{true};
+  
+  uint32_t checksum_error_count_{0};
+  uint32_t consecutive_errors_{0};
 
   bool display_enable {true}; // Status of display screen of AC unit.
 
