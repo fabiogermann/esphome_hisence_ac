@@ -108,6 +108,9 @@ protected:
   
   uint32_t checksum_error_count_{0};
   uint32_t consecutive_errors_{0};
+  /// Lifetime byte counter (RX). Useful diagnostic when frames are not closing
+  /// so we can tell whether the wire is alive at all.
+  uint32_t total_bytes_received_{0};
 
   bool display_enable {true}; // Status of display screen of AC unit.
 

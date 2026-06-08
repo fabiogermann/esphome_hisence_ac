@@ -29,7 +29,13 @@ void AirConditioner::loop() {
   // NOT clear rx_buffer_ here - the resync-safe extractor in try_extract_frame_
   // discards garbage on its own, and clearing here can throw away a partially
   // received frame.
-  if (millis() - this->last_recived_ > COMM_TIMEOUT_MS &&
+  //
+  // CRITICAL: skip the watchdog while we are already in after_fail. The
+  // after_fail block has its own backoff timer; letting the watchdog re-fire
+  // inside that wait window stacks state changes, reshuffles last_status_change
+  // and prevents the retry from ever actually firing.
+  if (status != Status::after_fail &&
+      millis() - this->last_recived_ > COMM_TIMEOUT_MS &&
       millis() - this->last_status_change > COMM_TIMEOUT_MS) {
     ESP_LOGD(TAG, "Communication timeout - resetting (errors: %u)",
              static_cast<unsigned>(this->consecutive_errors_));
@@ -92,6 +98,7 @@ void AirConditioner::loop() {
 
   int available_to_read = 0;
   bool any_frame_decoded = false;
+  size_t bytes_this_loop = 0;
   while ((available_to_read = this->available()) > 0) {
     int chunk_size = std::min(available_to_read, 64);
     std::vector<uint8_t> rec_buffer;
@@ -101,6 +108,8 @@ void AirConditioner::loop() {
     this->rx_buffer_.insert(this->rx_buffer_.end(), rec_buffer.begin(),
                             rec_buffer.end());
     this->last_recived_ = millis();
+    this->total_bytes_received_ += chunk_size;
+    bytes_this_loop += chunk_size;
 
     // Hard cap on backlog. The streaming extractor self-resyncs over garbage,
     // but we still need a ceiling so a continuously-noisy line can't grow the
@@ -132,6 +141,14 @@ void AirConditioner::loop() {
   if (any_frame_decoded) {
     change_status(Status::standby);
     return;
+  }
+
+  // Diagnostic: if we received bytes but no complete frame closed, surface
+  // that periodically so it's clear the wire is alive even when frames aren't.
+  if (bytes_this_loop > 0 && print_extra_log_in_this_loop) {
+    ESP_LOGD(TAG, "Got %u byte(s) this loop, no frame yet (rx_buf: %u)",
+             static_cast<unsigned>(bytes_this_loop),
+             static_cast<unsigned>(this->rx_buffer_.size()));
   }
 }
 
@@ -673,6 +690,13 @@ void AirConditioner::set_display_switch(bool state) {
 }
 
 void AirConditioner::change_status(Status new_status) {
+  // Idempotent: don't churn last_status_change when the state didn't change.
+  // Other timers (notably the after_fail backoff and the comm watchdog) read
+  // last_status_change to gate their own decisions; resetting it on a no-op
+  // call breaks those timers.
+  if (this->status == new_status) {
+    return;
+  }
   this->status = new_status;
   last_status_change = millis();
 }
