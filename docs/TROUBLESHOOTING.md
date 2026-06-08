@@ -2,9 +2,13 @@
 
 ## Symptom: Home Assistant entity never initialises
 
-The most common symptom: the device boots, connects to Wi-Fi, but the climate
-card in Home Assistant stays "Unknown" forever. The logs show a continuous
-loop of:
+> **Note:** This bug was fixed in the streaming-parser rewrite of
+> `parse_ac_message_byte_()` / `try_extract_frame_()`. The notes below remain
+> for historical context and as a debugging guide if the symptom returns.
+
+The most common pre-fix symptom: the device boots, connects to Wi-Fi, but the
+climate card in Home Assistant stays "Unknown" forever. The logs show a
+continuous loop of:
 
 ```
 Requesting status
@@ -14,22 +18,20 @@ Communication timeout - resetting
 Retrying communication
 ```
 
-**Root cause.** The C++ parser in `AirConditioner::parse_ac_message_byte_()`
-is not resync-safe. When a single stray byte arrives before the real frame —
-which happens routinely with this hardware — the parser flags PARSE_ERROR,
-clears the entire receive buffer, and goes back to standby. The next status
-response then arrives while the buffer is still being torn down, its leading
-`F4 F5` header is lost, and the cycle repeats forever.
+**Root cause.** The original C++ parser was not resync-safe. When a single
+stray byte arrived before a real frame — which happens routinely with this
+hardware — the parser flagged PARSE_ERROR, cleared the entire receive buffer,
+and went back to standby. The next status response then arrived while the
+buffer was still being torn down, its leading `F4 F5` header was lost, and
+the cycle repeated forever.
 
-**Confirming the bug locally.** The `tests/test_streaming_parser.py` suite
-replays the byte sequence from `output.txt` and asserts that the real frames
-buried between garbage bytes are recognised. The pure-Python `StreamingParser`
-in `tests/protocol.py` is the executable specification — bring the C++ parser
-into line with it and HA initialises correctly.
-
-**Workaround until fixed:** restart the firmware repeatedly until a clean
-`F4 F5 …` happens to arrive as the very first bytes on the UART. There is no
-firmware-side knob for this.
+**The fix.** `try_extract_frame_()` in `air_conditioner.cpp` now mirrors the
+pure-Python `StreamingParser` in `tests/protocol.py`: garbage bytes before
+the next valid `F4 F5` header are silently discarded; closed-but-invalid
+frames are rescanned for an embedded real header; the rx buffer is never
+wholesale cleared. The `tests/test_streaming_parser.py` suite replays the
+exact byte sequence from `output.txt` and asserts that real frames buried
+between garbage are still recognised.
 
 ## Symptom: continuous checksum errors
 

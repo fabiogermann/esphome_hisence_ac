@@ -44,12 +44,5 @@ python3 -m venv .venv
   HA needs from a real status response.
 - **Streaming parser** — the parser MUST resync after garbage. Several tests
   replay the exact byte sequence from `output.txt` and assert that real
-  frames embedded between truncated fragments are still recognised. Until the
-  C++ parser is brought in line with these tests, HA never initialises.
-
-## Expected failures (`xfail`)
-
-`test_encoding.py::test_send_status_range_guard_in_cpp_is_correct` is marked
-`xfail(strict=True)`. It documents an inverted boolean in
-`AirConditioner::send_status` — the test will go green automatically once the
-firmware bug is fixed.
+  frames embedded between truncated fragments are still recognised. The C++
+  parser in `air_conditioner.cpp` follows the same algorithm.

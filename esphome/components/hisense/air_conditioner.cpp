@@ -74,6 +74,7 @@ void AirConditioner::loop() {
   }
 
   int available_to_read = 0;
+  bool any_frame_decoded = false;
   while ((available_to_read = this->available()) > 0) {
     int chunk_size = std::min(available_to_read, 64);
     std::vector<uint8_t> rec_buffer;
@@ -82,41 +83,37 @@ void AirConditioner::loop() {
     this->read_array(&rec_buffer[0], chunk_size);
     this->rx_buffer_.insert(this->rx_buffer_.end(), rec_buffer.begin(),
                             rec_buffer.end());
-
-    if (this->rx_buffer_.size() > 200) {
-      ESP_LOGW(TAG, "RX buffer overflow - clearing");
-      this->rx_buffer_.clear();
-      this->consecutive_errors_++;
-      change_status(Status::after_fail);
-      return;
-    }
-
-    const auto parse_status = this->parse_ac_message_byte_();
     this->last_recived_ = millis();
-    
-    switch (parse_status) {
-    case ParseStatus::PARSE_ERROR:
-      ESP_LOGD(TAG, "Parse error (consecutive: %d)", consecutive_errors_);
-      this->rx_buffer_.clear();
-      this->consecutive_errors_++;
-      
-      if (consecutive_errors_ > 5) {
-        ESP_LOGW(TAG, "Too many consecutive errors - taking extended break");
-        change_status(Status::after_fail);
-      } else {
-        change_status(Status::standby);
-      }
-      return;
-      
-    case ParseStatus::PARSE_OK:
-      this->rx_buffer_.clear();
-      this->consecutive_errors_ = 0;
-      change_status(Status::standby);
-      return;
-      
-    case ParseStatus::NOT_FULL:
-      break;
+
+    // Hard cap on backlog. The streaming extractor self-resyncs over garbage,
+    // but we still need a ceiling so a continuously-noisy line can't grow the
+    // buffer unboundedly. Keep the last MAX_FRAME_SIZE bytes so any partial
+    // frame in progress survives the trim.
+    if (this->rx_buffer_.size() > 4 * MAX_FRAME_SIZE) {
+      ESP_LOGW(TAG, "RX buffer high-water mark - trimming");
+      this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                             this->rx_buffer_.end() - MAX_FRAME_SIZE);
     }
+
+    // Drain every complete frame that arrived in this chunk. Each successful
+    // extraction removes its bytes (plus any leading garbage) from rx_buffer_.
+    std::vector<uint8_t> payload;
+    while (this->try_extract_frame_(payload)) {
+      ESP_LOGD(TAG, "Parsing OK message: %s (%d)",
+               format_hex_pretty(payload).c_str(), payload.size());
+      this->decode_message(payload);
+      any_frame_decoded = true;
+      this->consecutive_errors_ = 0;
+      if (this->waiting_for_response) {
+        this->waiting_for_response = 0;
+      }
+      payload.clear();
+    }
+  }
+
+  if (any_frame_decoded) {
+    change_status(Status::standby);
+    return;
   }
 }
 
@@ -143,7 +140,7 @@ climate::ClimateTraits AirConditioner::traits() {
       {climate::CLIMATE_SWING_OFF, climate::CLIMATE_SWING_BOTH,
        climate::CLIMATE_SWING_VERTICAL, climate::CLIMATE_SWING_HORIZONTAL});
 
-  traits.set_supports_current_temperature(true);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
   traits.set_visual_target_temperature_step(1.0f);
 
   return traits;
@@ -225,7 +222,7 @@ void AirConditioner::send_status() {
     auto my_tmp =
         static_cast<uint8_t>(next_hvac_settings.target_temperature.value());
 
-    if (!(my_tmp > 16ul || my_tmp < 30ul)) {
+    if (my_tmp < 16ul || my_tmp > 30ul) {
       ESP_LOGD(TAG, "Not valid tmp!");
       return;
     }
@@ -285,93 +282,122 @@ void AirConditioner::control(const climate::ClimateCall &call) {
 }
 
 ParseStatus AirConditioner::parse_ac_message_byte_() {
-  size_t at = this->rx_buffer_.size() - 1;
-
-  if (at < 6) {
-    return ParseStatus::NOT_FULL;
-  }
-
-  if (this->rx_buffer_[0] != 0xF4 || this->rx_buffer_[1] != 0xF5) {
-    ESP_LOGD(TAG, "Wrong magic start sequence 0x%x 0x%x.", this->rx_buffer_[0],
-             this->rx_buffer_[1]);
-    return ParseStatus::PARSE_ERROR;
-  }
-
-  bool is_status_response = false;
-  if (this->rx_buffer_.size() >= 4) {
-    is_status_response = (this->rx_buffer_[2] == 0x01 && this->rx_buffer_[3] == 0x40);
-  }
-
-  if (is_status_response) {
-    const size_t expected_size = 82;
-    if (this->rx_buffer_.size() < expected_size) {
-      return ParseStatus::NOT_FULL;
+  // Legacy single-shot entry point. The receive loop now uses the streaming
+  // extractor try_extract_frame_() directly; this stub is kept so existing
+  // call sites still link. It defers to the streaming extractor and reports a
+  // result consistent with the old contract.
+  std::vector<uint8_t> payload;
+  if (this->try_extract_frame_(payload)) {
+    this->decode_message(payload);
+    if (this->waiting_for_response) {
+      this->waiting_for_response = 0;
     }
-    
-    if (this->rx_buffer_.size() > expected_size + 10) {
-      ESP_LOGW(TAG, "Frame too large (%d bytes) - likely corrupted", this->rx_buffer_.size());
-      return ParseStatus::PARSE_ERROR;
-    }
+    return ParseStatus::PARSE_OK;
   }
+  return ParseStatus::NOT_FULL;
+}
 
-  std::vector<uint8_t> payload(rx_buffer_.begin() + 2, rx_buffer_.end() - 4);
-  bool found_end = false;
-  
-  if (at > 8) {
-    if (this->rx_buffer_[at] == 0xFB && this->rx_buffer_[at - 1] == 0xF4) {
-      found_end = true;
-    } else if (is_status_response && this->rx_buffer_.size() >= 82) {
-      if (this->rx_buffer_[80] == 0xF4 && this->rx_buffer_[81] == 0xFB) {
-        found_end = true;
-        at = 81;
+bool AirConditioner::try_extract_frame_(std::vector<uint8_t> &payload_out) {
+  // Resync-safe streaming extractor. Walks rx_buffer_ looking for a complete
+  // F4 F5 ... F4 FB frame whose checksum validates. Garbage before the next
+  // valid header is silently discarded. See tests/protocol.py StreamingParser
+  // for the authoritative behavioural spec.
+  while (this->rx_buffer_.size() >= 8) {
+    // 1) Locate the next F4 F5 header. Drop anything before it.
+    size_t header_idx = 0;
+    bool found_header = false;
+    for (; header_idx + 1 < this->rx_buffer_.size(); header_idx++) {
+      if (this->rx_buffer_[header_idx] == 0xF4 &&
+          this->rx_buffer_[header_idx + 1] == 0xF5) {
+        found_header = true;
+        break;
       }
     }
-  }
+    if (!found_header) {
+      // Keep only the trailing byte in case it's the F4 of an upcoming header.
+      if (this->rx_buffer_.size() > 1) {
+        const uint8_t last = this->rx_buffer_.back();
+        this->rx_buffer_.clear();
+        if (last == 0xF4) {
+          this->rx_buffer_.push_back(last);
+        }
+      }
+      return false;
+    }
+    if (header_idx > 0) {
+      ESP_LOGV(TAG, "Discarding %u pre-header byte(s)",
+               static_cast<unsigned>(header_idx));
+      this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                             this->rx_buffer_.begin() + header_idx);
+    }
 
-  if (found_end) {
-    std::vector<uint8_t> payload_for_crc(rx_buffer_.begin(),
-                                         rx_buffer_.end() - 4);
+    // 2) Look for the F4 FB footer after the header.
+    //    A frame is at least header(2) + 2-byte body + cs(2) + footer(2) = 8.
+    size_t footer_idx = 0;  // index of the 0xF4 in the footer
+    bool found_footer = false;
+    for (size_t i = 2; i + 1 < this->rx_buffer_.size(); i++) {
+      if (this->rx_buffer_[i] == 0xF4 && this->rx_buffer_[i + 1] == 0xFB) {
+        footer_idx = i;
+        found_footer = true;
+        break;
+      }
+    }
 
-    auto const checksum = this->checksum(std::move(payload_for_crc));
+    if (!found_footer) {
+      // No complete frame yet. If we're already over the size cap, give up on
+      // this candidate header (it's almost certainly noise that happened to
+      // start with F4 F5) and rescan starting from the byte after it.
+      if (this->rx_buffer_.size() > MAX_FRAME_SIZE) {
+        ESP_LOGD(TAG,
+                 "No footer within %u bytes - discarding spurious header",
+                 static_cast<unsigned>(MAX_FRAME_SIZE));
+        this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                               this->rx_buffer_.begin() + 1);
+        continue;
+      }
+      return false;  // wait for more bytes
+    }
 
-    uint8_t cr1 = (checksum >> 8) & 0xFF;
-    uint8_t cr2 = checksum & 0xFF;
-    size_t len = rx_buffer_.size();
+    // 3) Validate checksum. Big-endian 2-byte sum of frame[2 .. footer_idx-2].
+    if (footer_idx < 4) {
+      // Footer too close to header - impossible frame; drop the header.
+      this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                             this->rx_buffer_.begin() + 1);
+      continue;
+    }
+    uint32_t sum = 0;
+    for (size_t i = 2; i + 2 < footer_idx; i++) {
+      sum += this->rx_buffer_[i];
+    }
+    sum &= 0xFFFF;
+    const uint8_t expected_hi = (sum >> 8) & 0xFF;
+    const uint8_t expected_lo = sum & 0xFF;
+    const uint8_t provided_hi = this->rx_buffer_[footer_idx - 2];
+    const uint8_t provided_lo = this->rx_buffer_[footer_idx - 1];
 
-    uint8_t provided_cr1 = rx_buffer_[at - 3];
-    uint8_t provided_cr2 = rx_buffer_[at - 2];
-
-    if (cr1 != provided_cr1 || cr2 != provided_cr2) {
+    if (expected_hi != provided_hi || expected_lo != provided_lo) {
       this->checksum_error_count_++;
-      ESP_LOGD(TAG, "Checksum error #%d - expected: 0x%02x 0x%02x, got: 0x%02x 0x%02x",
-               checksum_error_count_, cr1, cr2, provided_cr1, provided_cr2);
-      
-      if (checksum_error_count_ <= 3 || checksum_error_count_ % 10 == 0) {
-        ESP_LOGD(TAG, "Corrupted frame: %s", format_hex_pretty(rx_buffer_).c_str());
-      }
-      
-      return ParseStatus::PARSE_ERROR;
+      ESP_LOGD(TAG,
+               "Checksum error #%u - expected 0x%02x 0x%02x, got 0x%02x 0x%02x",
+               static_cast<unsigned>(this->checksum_error_count_),
+               expected_hi, expected_lo, provided_hi, provided_lo);
+      // The closed candidate is bogus. It may still contain an embedded real
+      // header further along; advance past just this header so we keep
+      // scanning the absorbed bytes.
+      this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                             this->rx_buffer_.begin() + 1);
+      continue;
     }
-  } else {
-    static uint32_t last_log = 0;
-    if (millis() - last_log > 1000) {
-      ESP_LOGD(TAG, "End sequence not found yet (size: %d)", this->rx_buffer_.size());
-      last_log = millis();
-    }
-    return ParseStatus::NOT_FULL;
+
+    // 4) Frame is valid. Extract the body (between header and checksum) and
+    //    pop the consumed bytes (including the trailing footer).
+    payload_out.assign(this->rx_buffer_.begin() + 2,
+                       this->rx_buffer_.begin() + (footer_idx - 2));
+    this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                           this->rx_buffer_.begin() + footer_idx + 2);
+    return true;
   }
-
-  ESP_LOGD(TAG, "Parsing OK message: %s (%d)",
-           format_hex_pretty(payload).c_str(), payload.size());
-  decode_message(payload);
-
-  if (waiting_for_response) {
-    waiting_for_response = 0;
-  } else {
-    ESP_LOGD(TAG, "Unexpected response received");
-  }
-
-  return ParseStatus::PARSE_OK;
+  return false;
 }
 
 void AirConditioner::dump_config() {

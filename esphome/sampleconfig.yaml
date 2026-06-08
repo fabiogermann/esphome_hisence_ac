@@ -32,7 +32,9 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "somebase64encodedsecret"
+    # Replace with your own 32-byte base64 key, e.g.
+    # python3 -c 'import base64,os; print(base64.b64encode(os.urandom(32)).decode())'
+    key: "GyDwPegwrAAjlW7PH9q/+UTbRA1cG14BShakKf+mtCk="
 
 ota:
   - platform: esphome

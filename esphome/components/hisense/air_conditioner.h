@@ -61,6 +61,23 @@ protected:
 
   ParseStatus parse_ac_message_byte_();
 
+  /// Resync-safe streaming extractor.
+  ///
+  /// Scans the front of ``rx_buffer_`` for the next complete, checksum-valid
+  /// ``F4 F5 ... F4 FB`` frame. Garbage bytes before the next valid header are
+  /// silently discarded. Returns true and fills ``payload_out`` with the body
+  /// (header and footer stripped) when a full validated frame is found; the
+  /// consumed bytes (including any leading garbage) are removed from
+  /// ``rx_buffer_``. Returns false when no complete frame is available yet.
+  /// Callers MUST NOT clear ``rx_buffer_`` on a false return - more bytes are
+  /// expected.
+  bool try_extract_frame_(std::vector<uint8_t> &payload_out);
+
+  /// Hard upper bound on frame size before we abandon a candidate and rescan
+  /// its tail. Real status responses are 82 bytes - 100 leaves headroom for
+  /// any unknown variants while still bounding worst-case memory.
+  static constexpr size_t MAX_FRAME_SIZE = 100;
+
   void decode_message(std::vector<uint8_t>);
 
   void send_status();

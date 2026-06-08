@@ -72,21 +72,17 @@ def test_target_temp_range_check_matches_spec():
     assert protocol.is_temp_in_range(31) is False
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Bug in air_conditioner.cpp send_status: the range guard "
-        "'(my_tmp > 16 || my_tmp < 30)' is logically inverted - it accepts "
-        "everything. The C++ should be '(my_tmp >= 16 && my_tmp <= 30)'."
-    ),
-    strict=True,
-)
 def test_send_status_range_guard_in_cpp_is_correct():
-    """Documents an inverted boolean in the firmware. Will pass once fixed."""
-    # Mimic the C++ condition over its accepted-vs-rejected set
-    accepts_15 = (15 > 16) or (15 < 30)
-    accepts_31 = (31 > 16) or (31 < 30)
-    # In a correct implementation, NEITHER 15 nor 31 should be accepted
-    assert not accepts_15 and not accepts_31
+    """Mirror the C++ guard in send_status: reject anything outside 16..30."""
+    # The fixed C++ condition is: if (my_tmp < 16 || my_tmp > 30) reject;
+    def cpp_rejects(t):
+        return t < 16 or t > 30
+
+    assert cpp_rejects(15)
+    assert cpp_rejects(31)
+    assert not cpp_rejects(16)
+    assert not cpp_rejects(30)
+    assert not cpp_rejects(22)
 
 
 # ---------------------------------------------------------------------------
