@@ -1,0 +1,734 @@
+INFO ESPHome 2026.4.5
+INFO Reading configuration /config/esphome/acremote01.yaml...
+WARNING The minimum WiFi authentication mode (wifi -> min_auth_mode) is not set. This controls the weakest encryption your device will accept when connecting to WiFi. Currently defaults to WPA (less secure), but will change to WPA2 (more secure) in 2026.6.0. WPA uses TKIP encryption which has known security vulnerabilities and should be avoided. WPA2 uses AES encryption which is significantly more secure. To silence this warning, explicitly set min_auth_mode under 'wifi:'. If your router supports WPA2 or WPA3, set 'min_auth_mode: WPA2'. If your router only supports WPA, set 'min_auth_mode: WPA'.
+INFO Generating C++ source...
+INFO Compiling app... Build path: /data/build/acremote01
+Processing acremote01 (board: esp01_1m; framework: arduino; platform: platformio/espressif8266@4.2.1)
+--------------------------------------------------------------------------------
+HARDWARE: ESP8266 80MHz, 80KB RAM, 1MB Flash
+ESPHome: Excluding Updater.cpp from build (using native OTA backend)
+ESPHome: Excluding core_esp8266_waveform_phase.cpp from build (waveform not required)
+ESPHome: Excluding core_esp8266_waveform_pwm.cpp from build (waveform not required)
+Dependency Graph
+|-- ESPAsyncTCP @ 2.0.0
+|-- ESP8266WiFi @ 1.0
+|-- ESPAsyncWebServer @ 3.9.6
+|-- DNSServer @ 1.1.1
+|-- ESP8266mDNS @ 1.2
+|-- noise-c @ 0.1.11
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_buffer.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_connection.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_frame_helper.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_frame_helper_noise.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_overflow_buffer.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_pb2.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_pb2_service.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/api_server.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/list_entities.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/proto.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/api/subscribe_state.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/captive_portal/captive_portal.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/climate/climate.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/climate/climate_mode.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/climate/climate_traits.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/core.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/crash_handler.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/gpio.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/helpers.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/preferences.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/printf_stubs.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esp8266/waveform_stubs.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/esphome/ota/ota_esphome.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/hisense/air_conditioner.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/logger/logger.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/logger/logger_esp8266.cpp.o
+src/esphome/components/hisense/air_conditioner.cpp: In member function 'virtual esphome::climate::ClimateTraits esphome::hisense::ac::AirConditioner::traits()':
+src/esphome/components/hisense/air_conditioner.cpp:146:47: warning: 'void esphome::climate::ClimateTraits::set_supports_current_temperature(bool)' is deprecated: This method is deprecated, use add_feature_flags() instead [-Wdeprecated-declarations]
+  146 |   traits.set_supports_current_temperature(true);
+      |                                               ^
+In file included from src/esphome/components/climate/climate.h:11,
+                 from src/esphome/components/hisense/air_conditioner.h:3,
+                 from src/esphome/components/hisense/air_conditioner.cpp:1:
+src/esphome/components/climate/climate_traits.h:89:8: note: declared here
+   89 |   void set_supports_current_temperature(bool supports_current_temperature) {
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Compiling .pioenvs/acremote01/src/esphome/components/md5/md5.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/mdns/mdns_component.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/mdns/mdns_esp8266.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/network/util.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/ota/ota_backend.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/ota/ota_backend_esp8266.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/ota/ota_backend_host.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/safe_mode/safe_mode.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/sensor/automation.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/sensor/filter.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/sensor/sensor.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/sha256/sha256.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/socket/lwip_raw_tcp_impl.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/socket/socket.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/switch/automation.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/switch/switch.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/uart/uart.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/uart/uart_component.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/uart/uart_component_esp8266.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/uart/uart_debugger.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/web_server/ota/ota_web_server.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/web_server_base/web_server_base.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/wifi/wifi_component.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/components/wifi/wifi_component_esp8266.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/application.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/color.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/component.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/component_iterator.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/controller_registry.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/entity_base.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/gpio.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/helpers.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/log.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/scheduler.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/time.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/time_64.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/util.cpp.o
+Compiling .pioenvs/acremote01/src/esphome/core/wake.cpp.o
+Compiling .pioenvs/acremote01/src/main.cpp.o
+Generating LD script .pioenvs/acremote01/ld/local.eagle.app.v6.common.ld
+Compiling .pioenvs/acremote01/libb36/ESPAsyncTCP/AsyncPrinter.cpp.o
+Compiling .pioenvs/acremote01/libb36/ESPAsyncTCP/ESPAsyncTCP.cpp.o
+Compiling .pioenvs/acremote01/libb36/ESPAsyncTCP/ESPAsyncTCPbuffer.cpp.o
+Compiling .pioenvs/acremote01/libb36/ESPAsyncTCP/SyncClient.cpp.o
+Compiling .pioenvs/acremote01/libb36/ESPAsyncTCP/tcp_axtls.c.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/BearSSLHelpers.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/CertStoreBearSSL.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFi.cpp.o
+Archiving .pioenvs/acremote01/libb36/libESPAsyncTCP.a
+Indexing .pioenvs/acremote01/libb36/libESPAsyncTCP.a
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiAP.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiGeneric.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiGratuitous.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiMulti.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiSTA-WPS.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiSTA.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/ESP8266WiFiScan.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/WiFiClient.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/WiFiClientSecureBearSSL.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/WiFiServer.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/WiFiServerSecureBearSSL.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/WiFiUdp.cpp.o
+Compiling .pioenvs/acremote01/lib67b/ESP8266WiFi/enable_wifi_at_boot_time.cpp.o
+Compiling .pioenvs/acremote01/libaf0/Hash/Hash.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/AsyncEventSource.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/AsyncJson.cpp.o
+Archiving .pioenvs/acremote01/lib67b/libESP8266WiFi.a
+Indexing .pioenvs/acremote01/lib67b/libESP8266WiFi.a
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/AsyncWebHeader.cpp.o
+Archiving .pioenvs/acremote01/libaf0/libHash.a
+Indexing .pioenvs/acremote01/libaf0/libHash.a
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/AsyncWebServerRequest.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/AsyncWebSocket.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/BackPort_SHA1Builder.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/ChunkPrint.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/Middleware.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/WebAuthentication.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/WebHandlers.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/WebRequest.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/WebResponses.cpp.o
+Compiling .pioenvs/acremote01/libba5/ESPAsyncWebServer/WebServer.cpp.o
+Compiling .pioenvs/acremote01/libecb/DNSServer/DNSServer.cpp.o
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/ESP8266mDNS.cpp.o
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/LEAmDNS.cpp.o
+Archiving .pioenvs/acremote01/libba5/libESPAsyncWebServer.a
+Indexing .pioenvs/acremote01/libba5/libESPAsyncWebServer.a
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/LEAmDNS_Control.cpp.o
+Archiving .pioenvs/acremote01/libecb/libDNSServer.a
+Indexing .pioenvs/acremote01/libecb/libDNSServer.a
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/LEAmDNS_Helpers.cpp.o
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/LEAmDNS_Structs.cpp.o
+Compiling .pioenvs/acremote01/lib3ff/ESP8266mDNS/LEAmDNS_Transfer.cpp.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_core/salsa/ref/core_salsa_ref.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_hash/crypto_hash.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_hash/sha256/cp/hash_sha256_cp.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_hash/sha256/hash_sha256.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_onetimeauth/crypto_onetimeauth.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_onetimeauth/poly1305/donna/poly1305_donna.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_onetimeauth/poly1305/onetimeauth_poly1305.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_scalarmult/crypto_scalarmult.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_scalarmult/curve25519/ref10/x25519_ref10.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_scalarmult/curve25519/scalarmult_curve25519.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/chacha20/ref/chacha20_ref.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/chacha20/stream_chacha20.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/crypto_stream.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/ref/salsa20_ref.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/stream_salsa20.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/xmm6/salsa20_xmm6-asm.S.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/xmm6/salsa20_xmm6.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/xmm6int/salsa20_xmm6int-avx2.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_stream/salsa20/xmm6int/salsa20_xmm6int-sse2.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/crypto_verify/verify.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/randombytes/internal/randombytes_internal_random.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/randombytes/randombytes.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/randombytes/sysrandom/randombytes_sysrandom.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/sodium/codecs.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/sodium/core.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/sodium/runtime.c.o
+Compiling .pioenvs/acremote01/lib0ae/libsodium/sodium/utils.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/openssl/cipher-aesgcm.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/cipher-aesgcm.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/cipher-chachapoly.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/dh-curve25519.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/hash-blake2b.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/hash-blake2s.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/ref/hash-sha256.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/sodium/cipher-aesgcm.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/sodium/cipher-chachapoly.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/sodium/dh-curve25519.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/sodium/hash-blake2b.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/backend/sodium/hash-sha256.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/aes/rijndael-alg-fst.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/blake2/blake2b.c.o
+Archiving .pioenvs/acremote01/lib0ae/libsodium.a
+Indexing .pioenvs/acremote01/lib0ae/libsodium.a
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/blake2/blake2s.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/chacha/chacha.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/donna/curve25519-donna-c64.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/donna/curve25519-donna.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/donna/poly1305-donna.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/sha2/sha256.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/sha2/sha512.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/crypto/x25519/x25519.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/cipherstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/dhstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/errors.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/handshakestate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/hashstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/internal.c.o
+Archiving .pioenvs/acremote01/lib3ff/libESP8266mDNS.a
+Indexing .pioenvs/acremote01/lib3ff/libESP8266mDNS.a
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/names.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/patterns.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/rand_os.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/rand_sodium.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/randstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/signstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/symmetricstate.c.o
+Compiling .pioenvs/acremote01/libd1e/noise-c/protocol/util.c.o
+Archiving .pioenvs/acremote01/libFrameworkArduinoVariant.a
+Indexing .pioenvs/acremote01/libFrameworkArduinoVariant.a
+Compiling .pioenvs/acremote01/FrameworkArduino/Crypto.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Esp-frag.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Esp-version.cpp.o
+Archiving .pioenvs/acremote01/libd1e/libnoise-c.a
+Indexing .pioenvs/acremote01/libd1e/libnoise-c.a
+Compiling .pioenvs/acremote01/FrameworkArduino/Esp.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/FS.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/FSnoop.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/IPAddress.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/LwipDhcpServer-NonOS.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/LwipDhcpServer.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/LwipIntf.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/LwipIntfCB.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Print.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Schedule.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/StackThunk.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Stream.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/StreamSend.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/Tone.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/TypeConversion.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/WMath.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/WString.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/abi.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/aes_unwrap.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/base64.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/cbuf.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/cont.S.o
+Compiling .pioenvs/acremote01/FrameworkArduino/cont_util.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_app_entry_noextra4k.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_eboot_command.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_features.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_flash_quirks.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_flash_utils.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_i2s.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_main.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_non32xfer.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_noniso.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_phy.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_postmortem.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_si2c.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_sigma_delta.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_spi_utils.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_timer.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_vm.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring_analog.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring_digital.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring_pulse.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring_pwm.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/core_esp8266_wiring_shift.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/crc32.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/debug.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/exc-c-wrapper-handler.S.o
+Compiling .pioenvs/acremote01/FrameworkArduino/exc-sethandler.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/flash_hal.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/gdb_hooks.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/heap.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/hwdt_app_entry.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/libb64/cdecode.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/libb64/cencode.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/libc_replacements.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/mmu_iram.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/reboot_uart_dwnld.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs/spiffs_cache.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs/spiffs_check.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs/spiffs_gc.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs/spiffs_hydrogen.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs/spiffs_nucleus.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/spiffs_api.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/sqrt32.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/stdlib_noniso.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/time.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/uart.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/umm_malloc/umm_info.c.o
+Compiling .pioenvs/acremote01/FrameworkArduino/umm_malloc/umm_integrity.c.o
+Compiling .pioenvs/acremote01/FrameworkArduino/umm_malloc/umm_local.c.o
+Compiling .pioenvs/acremote01/FrameworkArduino/umm_malloc/umm_malloc.cpp.o
+Compiling .pioenvs/acremote01/FrameworkArduino/umm_malloc/umm_poison.c.o
+Compiling .pioenvs/acremote01/FrameworkArduino/wpa2_eap_patch.cpp.o
+Archiving .pioenvs/acremote01/libFrameworkArduino.a
+Indexing .pioenvs/acremote01/libFrameworkArduino.a
+remove_scanf_float_flag([".pioenvs/acremote01/firmware.elf"], [".pioenvs/acremote01/src/esphome/components/api/api_buffer.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_connection.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_frame_helper.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_frame_helper_noise.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_overflow_buffer.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_pb2.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_pb2_service.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/api_server.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/list_entities.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/proto.cpp.o", ".pioenvs/acremote01/src/esphome/components/api/subscribe_state.cpp.o", ".pioenvs/acremote01/src/esphome/components/captive_portal/captive_portal.cpp.o", ".pioenvs/acremote01/src/esphome/components/climate/climate.cpp.o", ".pioenvs/acremote01/src/esphome/components/climate/climate_mode.cpp.o", ".pioenvs/acremote01/src/esphome/components/climate/climate_traits.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/core.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/crash_handler.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/gpio.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/helpers.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/preferences.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/printf_stubs.cpp.o", ".pioenvs/acremote01/src/esphome/components/esp8266/waveform_stubs.cpp.o", ".pioenvs/acremote01/src/esphome/components/esphome/ota/ota_esphome.cpp.o", ".pioenvs/acremote01/src/esphome/components/hisense/air_conditioner.cpp.o", ".pioenvs/acremote01/src/esphome/components/logger/logger.cpp.o", ".pioenvs/acremote01/src/esphome/components/logger/logger_esp8266.cpp.o", ".pioenvs/acremote01/src/esphome/components/md5/md5.cpp.o", ".pioenvs/acremote01/src/esphome/components/mdns/mdns_component.cpp.o", ".pioenvs/acremote01/src/esphome/components/mdns/mdns_esp8266.cpp.o", ".pioenvs/acremote01/src/esphome/components/network/util.cpp.o", ".pioenvs/acremote01/src/esphome/components/ota/ota_backend.cpp.o", ".pioenvs/acremote01/src/esphome/components/ota/ota_backend_esp8266.cpp.o", ".pioenvs/acremote01/src/esphome/components/ota/ota_backend_host.cpp.o", ".pioenvs/acremote01/src/esphome/components/safe_mode/safe_mode.cpp.o", ".pioenvs/acremote01/src/esphome/components/sensor/automation.cpp.o", ".pioenvs/acremote01/src/esphome/components/sensor/filter.cpp.o", ".pioenvs/acremote01/src/esphome/components/sensor/sensor.cpp.o", ".pioenvs/acremote01/src/esphome/components/sha256/sha256.cpp.o", ".pioenvs/acremote01/src/esphome/components/socket/lwip_raw_tcp_impl.cpp.o", ".pioenvs/acremote01/src/esphome/components/socket/socket.cpp.o", ".pioenvs/acremote01/src/esphome/components/switch/automation.cpp.o", ".pioenvs/acremote01/src/esphome/components/switch/switch.cpp.o", ".pioenvs/acremote01/src/esphome/components/uart/uart.cpp.o", ".pioenvs/acremote01/src/esphome/components/uart/uart_component.cpp.o", ".pioenvs/acremote01/src/esphome/components/uart/uart_component_esp8266.cpp.o", ".pioenvs/acremote01/src/esphome/components/uart/uart_debugger.cpp.o", ".pioenvs/acremote01/src/esphome/components/web_server/ota/ota_web_server.cpp.o", ".pioenvs/acremote01/src/esphome/components/web_server_base/web_server_base.cpp.o", ".pioenvs/acremote01/src/esphome/components/wifi/wifi_component.cpp.o", ".pioenvs/acremote01/src/esphome/components/wifi/wifi_component_esp8266.cpp.o", ".pioenvs/acremote01/src/esphome/core/application.cpp.o", ".pioenvs/acremote01/src/esphome/core/color.cpp.o", ".pioenvs/acremote01/src/esphome/core/component.cpp.o", ".pioenvs/acremote01/src/esphome/core/component_iterator.cpp.o", ".pioenvs/acremote01/src/esphome/core/controller_registry.cpp.o", ".pioenvs/acremote01/src/esphome/core/entity_base.cpp.o", ".pioenvs/acremote01/src/esphome/core/gpio.cpp.o", ".pioenvs/acremote01/src/esphome/core/helpers.cpp.o", ".pioenvs/acremote01/src/esphome/core/log.cpp.o", ".pioenvs/acremote01/src/esphome/core/scheduler.cpp.o", ".pioenvs/acremote01/src/esphome/core/time.cpp.o", ".pioenvs/acremote01/src/esphome/core/time_64.cpp.o", ".pioenvs/acremote01/src/esphome/core/util.cpp.o", ".pioenvs/acremote01/src/esphome/core/wake.cpp.o", ".pioenvs/acremote01/src/main.cpp.o"])
+ESPHome: Removing _scanf_float (saves ~8KB flash)
+Linking .pioenvs/acremote01/firmware.elf
+RAM:   [====      ]  41.2% (used 33720 bytes from 81920 bytes)
+Flash: [=====     ]  47.1% (used 482269 bytes from 1023984 bytes)
+Building .pioenvs/acremote01/firmware.bin
+esp8266_copy_factory_bin([".pioenvs/acremote01/firmware.bin"], [".pioenvs/acremote01/firmware.elf"])
+esp8266_copy_ota_bin([".pioenvs/acremote01/firmware.bin"], [".pioenvs/acremote01/firmware.elf"])
+======================== [SUCCESS] Took 351.73 seconds ========================
+INFO Build Info: config_hash=0x9cfd773b build_time_str=2026-06-08 08:49:40 -0400
+INFO Successfully compiled program.
+INFO Connecting to 10.1.143.107 port 8266...
+INFO Connected to 10.1.143.107
+INFO Uploading /data/build/acremote01/.pioenvs/acremote01/firmware.bin (486416 bytes)
+INFO Compressed to 345393 bytes
+Uploading: [============================================================] 100% Done...
+
+INFO Upload took 7.07 seconds, waiting for result...
+INFO OTA successful
+INFO Successfully uploaded program.
+INFO Starting log output from 10.1.143.107 using esphome API
+INFO Successfully resolved acremote01 @ 10.1.143.107 in 0.000s
+INFO Successfully connected to acremote01 @ 10.1.143.107 in 19.397s
+INFO Successful handshake with acremote01 @ 10.1.143.107 in 2.883s
+[08:56:23.852][I][app:154]: ESPHome version 2026.4.5 compiled on 2026-06-08 08:49:40 -0400
+[08:56:23.852][C][logger:219]: Logger:
+[08:56:23.852][C][logger:219]:   Max Level: DEBUG
+[08:56:23.852][C][logger:219]:   Initial Level: DEBUG
+[08:56:23.853][C][logger:226]:   Log Baud Rate: 0
+[08:56:23.853][C][logger:226]:   Hardware UART: NONE
+[08:56:23.854][C][logger:241]:   Level for 'climate': DEBUG
+[08:56:23.854][C][logger:241]:   Level for 'sensor': DEBUG
+[08:56:23.855][C][logger:241]:   Level for 'uart': DEBUG
+[08:56:23.856][C][uart.arduino_esp8266:137]: UART Bus:
+[08:56:23.856][C][uart.arduino_esp8266:152]:   TX Pin: GPIO1
+[08:56:23.857][C][uart.arduino_esp8266:152]:   RX Pin: GPIO3
+[08:56:23.913][C][uart.arduino_esp8266:141]:   RX Buffer Size: 256
+[08:56:23.914][C][uart.arduino_esp8266:143]:   Baud Rate: 9600 baud
+[08:56:23.914][C][uart.arduino_esp8266:143]:   Data Bits: 8
+[08:56:23.914][C][uart.arduino_esp8266:143]:   Parity: NONE
+[08:56:23.914][C][uart.arduino_esp8266:143]:   Stop bits: 1
+[08:56:23.915][C][uart.arduino_esp8266:150]:   Using hardware serial interface.
+[08:56:23.916][C][climate.air_conditioner:378]: Hisense:
+[08:56:23.916][C][climate.air_conditioner:380]:   Checksum errors: 0
+[08:56:23.962][C][captive_portal:134]: Captive Portal:
+[08:56:23.963][C][wifi:1505]: WiFi:
+[08:56:23.963][C][wifi:1505]:   Local MAC: 34:5F:45:70:86:39
+[08:56:23.963][C][wifi:1505]:   Connected: YES
+[08:56:23.964][C][wifi:1216]:   IP Address: 10.1.143.107
+[08:56:23.964][C][wifi:1227]:   SSID: [redacted]
+[08:56:23.964][C][wifi:1227]:   BSSID: [redacted]
+[08:56:23.964][C][wifi:1227]:   Hostname: 'acremote01'
+[08:56:23.964][C][wifi:1227]:   Signal strength: -45 dB ▂▄▆█
+[08:56:23.964][C][wifi:1227]:   Channel: 1
+[08:56:23.964][C][wifi:1227]:   Subnet: 255.255.255.0
+[08:56:23.964][C][wifi:1227]:   Gateway: 10.1.143.1
+[08:56:23.964][C][wifi:1227]:   DNS1: 10.1.143.1
+[08:56:23.964][C][wifi:1227]:   DNS2: 0.0.0.0
+[08:56:23.967][C][esphome.ota:071]: Over-The-Air updates:
+[08:56:23.967][C][esphome.ota:071]:   Address: 10.1.143.107:8266
+[08:56:23.967][C][esphome.ota:071]:   Version: 2
+[08:56:23.969][C][esphome.ota:078]:   Password configured
+[08:56:23.971][C][safe_mode:026]: Safe Mode:
+[08:56:23.971][C][safe_mode:026]:   Successful after: 60s
+[08:56:23.971][C][safe_mode:026]:   Invoke after: 10 attempts
+[08:56:23.971][C][safe_mode:026]:   Duration: 300s
+[08:56:23.972][C][web_server.ota:256]: Web Server OTA
+[08:56:23.972][C][api:235]: Server:
+[08:56:23.972][C][api:235]:   Address: 10.1.143.107:6053
+[08:56:23.972][C][api:235]:   Listen backlog: 1
+[08:56:23.972][C][api:235]:   Max connections: 4
+[08:56:23.975][C][api:242]:   Noise encryption: YES
+[08:56:23.976][C][mdns:194]: mDNS:
+[08:56:23.976][C][mdns:194]:   Hostname: acremote01
+[08:56:26.446][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:56:28.451][D][climate.air_conditioner:053]: Retrying communication
+[08:56:28.452][D][climate.air_conditioner:065]: Requesting status
+[08:56:28.452][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:56:28.654][D][climate.air_conditioner:295]: Wrong magic start sequence 0x1 0x1.
+[08:56:28.654][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:56:28.655][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:56:28.660][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:56:28.660][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:56:28.661][D][climate.air_conditioner:099]: Parse error (consecutive: 2)
+[08:56:28.687][D][climate.air_conditioner:295]: Wrong magic start sequence 0x10 0x10.
+[08:56:28.688][D][climate.air_conditioner:099]: Parse error (consecutive: 3)
+[08:56:28.689][D][uart_debug:113]: <<< 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 10 BB 3E 84 02 20 00 00 80 80 80 10 10 7F 77 7F 08 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:56:30.831][D][climate.air_conditioner:065]: Requesting status
+[08:56:30.832][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:56:38.750][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:56:40.751][D][climate.air_conditioner:053]: Retrying communication
+[08:56:40.751][D][climate.air_conditioner:065]: Requesting status
+[08:56:40.751][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:56:49.098][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:56:50.630][D][climate.air_conditioner:048]: Waiting 348 ms before retry (errors: 0)
+[08:56:50.774][D][climate.air_conditioner:053]: Retrying communication
+[08:56:50.780][D][climate.air_conditioner:065]: Requesting status
+[08:56:50.780][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:56:58.840][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:56:59.843][D][climate.air_conditioner:048]: Waiting 1363 ms before retry (errors: 0)
+[08:57:00.828][D][climate.air_conditioner:053]: Retrying communication
+[08:57:00.828][D][climate.air_conditioner:065]: Requesting status
+[08:57:00.836][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:01.087][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 13 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C3 F4 FB
+[08:57:01.088][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.13.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:57:01.094][D][climate.air_conditioner:420]: decode_message
+[08:57:01.095][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:57:01.095][D][climate.air_conditioner:468]: fan speed 257
+[08:57:01.096][D][climate.air_conditioner:489]: acc status new
+[08:57:01.182][S][climate]: 'Hisense' >>
+[08:57:01.182][S][climate]:   Mode: OFF
+[08:57:01.182][S][climate]:   Fan Mode: OFF
+[08:57:01.182][S][climate]:   Target Temperature: 21.00°C
+[08:57:01.184][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:57:01.184][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:57:01.184][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:57:01.185][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:57:01.185][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:57:03.371][D][climate.air_conditioner:065]: Requesting status
+[08:57:03.372][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:08.359][I][safe_mode:091]: Boot seems successful; resetting boot loop counter
+[08:57:11.612][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:57:11.612][D][climate.air_conditioner:048]: Waiting 1659 ms before retry (errors: 0)
+[08:57:13.137][D][climate.air_conditioner:053]: Retrying communication
+[08:57:13.145][D][climate.air_conditioner:065]: Requesting status
+[08:57:13.145][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:13.315][D][climate.air_conditioner:358]: End sequence not found yet (size: 11)
+[08:57:13.683][D][uart_debug:113]: <<< F4 F5 01 01 01 01 00 66 00 01 00 00 30 15 FF
+[08:57:21.838][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:57:23.325][D][climate.air_conditioner:053]: Retrying communication
+[08:57:23.338][D][climate.air_conditioner:065]: Requesting status
+[08:57:23.339][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:31.408][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:57:32.927][D][climate.air_conditioner:048]: Waiting 859 ms before retry (errors: 0)
+[08:57:33.363][D][climate.air_conditioner:053]: Retrying communication
+[08:57:33.370][D][climate.air_conditioner:065]: Requesting status
+[08:57:33.370][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:41.399][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:57:41.709][D][climate.air_conditioner:048]: Waiting 1887 ms before retry (errors: 0)
+[08:57:43.413][D][climate.air_conditioner:053]: Retrying communication
+[08:57:43.413][D][climate.air_conditioner:065]: Requesting status
+[08:57:43.419][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:43.583][D][climate.air_conditioner:295]: Wrong magic start sequence 0xf5 0x1.
+[08:57:43.584][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:57:43.596][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x1.
+[08:57:43.596][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:57:43.619][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:57:43.627][D][climate.air_conditioner:099]: Parse error (consecutive: 2)
+[08:57:43.647][D][climate.air_conditioner:295]: Wrong magic start sequence 0x40 0x41.
+[08:57:43.648][D][climate.air_conditioner:099]: Parse error (consecutive: 3)
+[08:57:43.664][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x21.
+[08:57:43.664][D][climate.air_conditioner:099]: Parse error (consecutive: 4)
+[08:57:43.763][D][uart_debug:113]: <<< F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 C2 60 01 01 00 00 00 00 04 00 00 4C 04 04 01 01 00 38 00 00 00 14 12 12 28 00 00 FC 40 41 00 00 C0 05 78 00 00 00 00 80 08 00 80 84 20 00 00 21 00 00 86 00 20 04 50 1C DF
+[08:57:45.822][D][climate.air_conditioner:065]: Requesting status
+[08:57:45.823][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:53.680][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:57:55.698][D][climate.air_conditioner:053]: Retrying communication
+[08:57:55.699][D][climate.air_conditioner:065]: Requesting status
+[08:57:55.699][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:57:55.882][D][climate.air_conditioner:295]: Wrong magic start sequence 0x1 0x1.
+[08:57:55.883][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:57:55.883][D][climate.air_conditioner:295]: Wrong magic start sequence 0x17 0x15.
+[08:57:55.925][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:57:55.926][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:57:55.926][D][climate.air_conditioner:099]: Parse error (consecutive: 2)
+[08:57:55.926][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:57:55.927][D][climate.air_conditioner:099]: Parse error (consecutive: 3)
+[08:57:55.927][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:57:55.928][D][climate.air_conditioner:099]: Parse error (consecutive: 4)
+[08:57:55.932][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:57:55.933][D][climate.air_conditioner:099]: Parse error (consecutive: 5)
+[08:57:55.933][W][climate.air_conditioner:104]: Too many consecutive errors - taking extended break
+[08:57:56.535][D][uart_debug:113]: <<< 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 0D 58 10 D7 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 3C DF
+[08:57:56.540][D][climate.air_conditioner:048]: Waiting 3397 ms before retry (errors: 6)
+[08:57:59.611][D][climate.air_conditioner:048]: Waiting 385 ms before retry (errors: 6)
+[08:57:59.954][D][climate.air_conditioner:053]: Retrying communication
+[08:57:59.954][D][climate.air_conditioner:065]: Requesting status
+[08:57:59.961][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:00.241][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:58:00.242][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:58:00.253][D][climate.air_conditioner:420]: decode_message
+[08:58:00.254][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:58:00.254][D][climate.air_conditioner:468]: fan speed 257
+[08:58:00.254][D][climate.air_conditioner:489]: acc status new
+[08:58:00.305][S][climate]: 'Hisense' >>
+[08:58:00.305][S][climate]:   Mode: OFF
+[08:58:00.305][S][climate]:   Fan Mode: OFF
+[08:58:00.305][S][climate]:   Target Temperature: 21.00°C
+[08:58:00.307][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:58:00.307][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:58:00.307][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:58:00.308][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:58:00.308][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:58:02.483][D][climate.air_conditioner:065]: Requesting status
+[08:58:02.483][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:02.483][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 13 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C3 F4 FB
+[08:58:02.511][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.13.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:58:02.511][D][climate.air_conditioner:420]: decode_message
+[08:58:02.511][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:58:02.514][D][climate.air_conditioner:468]: fan speed 257
+[08:58:02.514][D][climate.air_conditioner:489]: acc status new
+[08:58:02.581][S][climate]: 'Hisense' >>
+[08:58:02.581][S][climate]:   Mode: OFF
+[08:58:02.581][S][climate]:   Fan Mode: OFF
+[08:58:02.581][S][climate]:   Target Temperature: 21.00°C
+[08:58:02.582][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:58:02.582][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:58:02.583][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:58:02.583][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:58:02.584][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:58:04.633][D][climate.air_conditioner:065]: Requesting status
+[08:58:04.634][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:12.562][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:58:14.541][D][climate.air_conditioner:053]: Retrying communication
+[08:58:14.541][D][climate.air_conditioner:065]: Requesting status
+[08:58:14.541][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:22.949][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:58:23.882][D][climate.air_conditioner:048]: Waiting 970 ms before retry (errors: 0)
+[08:58:24.578][D][climate.air_conditioner:053]: Retrying communication
+[08:58:24.578][D][climate.air_conditioner:065]: Requesting status
+[08:58:24.579][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:24.808][D][climate.air_conditioner:295]: Wrong magic start sequence 0xf5 0x1.
+[08:58:24.808][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:58:24.808][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x30.
+[08:58:24.814][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:58:24.815][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:58:24.815][D][climate.air_conditioner:099]: Parse error (consecutive: 2)
+[08:58:24.815][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:58:24.815][D][climate.air_conditioner:099]: Parse error (consecutive: 3)
+[08:58:24.828][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0xd8.
+[08:58:24.835][D][climate.air_conditioner:099]: Parse error (consecutive: 4)
+[08:58:25.054][D][uart_debug:113]: <<< F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 B5 09 12 4E 02 FC 00 00 00 40 00 00 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00 D8 10 02 C4 FE FF
+[08:58:26.842][D][climate.air_conditioner:065]: Requesting status
+[08:58:26.857][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:27.165][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:58:27.166][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:58:27.173][D][climate.air_conditioner:420]: decode_message
+[08:58:27.173][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:58:27.174][D][climate.air_conditioner:468]: fan speed 257
+[08:58:27.174][D][climate.air_conditioner:489]: acc status new
+[08:58:27.192][S][climate]: 'Hisense' >>
+[08:58:27.192][S][climate]:   Mode: OFF
+[08:58:27.192][S][climate]:   Fan Mode: OFF
+[08:58:27.192][S][climate]:   Target Temperature: 21.00°C
+[08:58:27.193][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:58:27.194][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:58:27.194][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:58:27.194][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:58:27.194][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:58:29.130][D][climate.air_conditioner:065]: Requesting status
+[08:58:29.130][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:29.364][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:58:29.377][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:58:29.377][D][climate.air_conditioner:420]: decode_message
+[08:58:29.377][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:58:29.406][D][climate.air_conditioner:468]: fan speed 257
+[08:58:29.406][D][climate.air_conditioner:489]: acc status new
+[08:58:29.461][S][climate]: 'Hisense' >>
+[08:58:29.461][S][climate]:   Mode: OFF
+[08:58:29.461][S][climate]:   Fan Mode: OFF
+[08:58:29.461][S][climate]:   Target Temperature: 21.00°C
+[08:58:29.463][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:58:29.463][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:58:29.468][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:58:29.468][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:58:29.469][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:58:31.710][D][climate.air_conditioner:065]: Requesting status
+[08:58:31.710][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:31.711][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 13 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C3 F4 FB
+[08:58:39.772][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:58:41.676][D][climate.air_conditioner:048]: Waiting 28 ms before retry (errors: 0)
+[08:58:41.677][D][climate.air_conditioner:053]: Retrying communication
+[08:58:41.680][D][climate.air_conditioner:065]: Requesting status
+[08:58:41.680][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:58:49.695][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:58:50.921][D][climate.air_conditioner:048]: Waiting 1063 ms before retry (errors: 0)
+[08:58:51.708][D][climate.air_conditioner:053]: Retrying communication
+[08:58:51.708][D][climate.air_conditioner:065]: Requesting status
+[08:58:51.713][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:00.054][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:59:01.747][D][climate.air_conditioner:053]: Retrying communication
+[08:59:01.752][D][climate.air_conditioner:065]: Requesting status
+[08:59:01.752][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:01.964][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:59:01.983][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:59:02.004][D][uart_debug:113]: <<< 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10 80 A0 02 02 CE FC F4 FB
+[08:59:02.016][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:59:02.017][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:59:04.006][D][climate.air_conditioner:065]: Requesting status
+[08:59:04.006][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:04.273][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:59:04.273][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:59:04.274][D][climate.air_conditioner:420]: decode_message
+[08:59:04.279][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:59:04.280][D][climate.air_conditioner:468]: fan speed 257
+[08:59:04.280][D][climate.air_conditioner:489]: acc status new
+[08:59:04.357][S][climate]: 'Hisense' >>
+[08:59:04.357][S][climate]:   Mode: OFF
+[08:59:04.357][S][climate]:   Fan Mode: OFF
+[08:59:04.357][S][climate]:   Target Temperature: 21.00°C
+[08:59:04.358][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:59:04.358][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:59:04.359][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:59:04.359][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:59:04.360][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:59:06.534][D][climate.air_conditioner:065]: Requesting status
+[08:59:06.535][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:06.535][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:59:06.545][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:59:06.546][D][climate.air_conditioner:420]: decode_message
+[08:59:06.547][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:59:06.559][D][climate.air_conditioner:468]: fan speed 257
+[08:59:06.559][D][climate.air_conditioner:489]: acc status new
+[08:59:06.630][S][climate]: 'Hisense' >>
+[08:59:06.630][S][climate]:   Mode: OFF
+[08:59:06.630][S][climate]:   Fan Mode: OFF
+[08:59:06.630][S][climate]:   Target Temperature: 21.00°C
+[08:59:06.635][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:59:06.636][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:59:06.637][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:59:06.637][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:59:06.638][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:59:08.683][D][climate.air_conditioner:065]: Requesting status
+[08:59:08.684][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:08.923][D][uart_debug:113]: <<< FB
+[08:59:16.850][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:59:17.892][D][climate.air_conditioner:048]: Waiting 1127 ms before retry (errors: 0)
+[08:59:18.826][D][climate.air_conditioner:053]: Retrying communication
+[08:59:18.829][D][climate.air_conditioner:065]: Requesting status
+[08:59:18.830][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:19.052][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:59:19.056][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:59:19.077][D][uart_debug:113]: <<< 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 83 78 01 00 00 0C C4 F4 FB
+[08:59:19.077][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:59:19.081][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:59:21.100][D][climate.air_conditioner:065]: Requesting status
+[08:59:21.101][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:21.368][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:59:21.368][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:59:21.369][D][climate.air_conditioner:420]: decode_message
+[08:59:21.375][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:59:21.375][D][climate.air_conditioner:468]: fan speed 257
+[08:59:21.376][D][climate.air_conditioner:489]: acc status new
+[08:59:21.436][S][climate]: 'Hisense' >>
+[08:59:21.436][S][climate]:   Mode: OFF
+[08:59:21.436][S][climate]:   Fan Mode: OFF
+[08:59:21.436][S][climate]:   Target Temperature: 21.00°C
+[08:59:21.438][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:59:21.438][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:59:21.438][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:59:21.439][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:59:21.440][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:59:23.404][D][climate.air_conditioner:065]: Requesting status
+[08:59:23.404][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:23.549][D][climate.air_conditioner:295]: Wrong magic start sequence 0xf5 0x1.
+[08:59:23.562][D][climate.air_conditioner:099]: Parse error (consecutive: 0)
+[08:59:23.563][D][climate.air_conditioner:295]: Wrong magic start sequence 0x15 0x17.
+[08:59:23.563][D][climate.air_conditioner:099]: Parse error (consecutive: 1)
+[08:59:23.572][D][climate.air_conditioner:295]: Wrong magic start sequence 0x1 0xc0.
+[08:59:23.572][D][climate.air_conditioner:099]: Parse error (consecutive: 2)
+[08:59:23.586][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x0.
+[08:59:23.589][D][climate.air_conditioner:099]: Parse error (consecutive: 3)
+[08:59:23.633][D][climate.air_conditioner:295]: Wrong magic start sequence 0x0 0x18.
+[08:59:23.634][D][climate.air_conditioner:099]: Parse error (consecutive: 4)
+[08:59:23.892][D][uart_debug:113]: <<< F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 06 8F 00 01 C0 00 00 00 00 14 12 12 28 00 E0 FF 3E 04 04 04 00 00 70 3C 10 10 00 00 00 00 00 00 00 00 00 00 00 18 10 00 82 1C DF
+[08:59:25.888][D][climate.air_conditioner:065]: Requesting status
+[08:59:25.888][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:25.889][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:59:25.942][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:59:25.943][D][climate.air_conditioner:420]: decode_message
+[08:59:25.943][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:59:25.944][D][climate.air_conditioner:468]: fan speed 257
+[08:59:25.944][D][climate.air_conditioner:489]: acc status new
+[08:59:25.970][S][climate]: 'Hisense' >>
+[08:59:25.970][S][climate]:   Mode: OFF
+[08:59:25.970][S][climate]:   Fan Mode: OFF
+[08:59:25.970][S][climate]:   Target Temperature: 21.00°C
+[08:59:25.972][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:59:25.974][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:59:25.975][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:59:25.976][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:59:25.977][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:59:28.069][D][climate.air_conditioner:065]: Requesting status
+[08:59:28.070][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:35.971][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:59:37.949][D][climate.air_conditioner:053]: Retrying communication
+[08:59:37.949][D][climate.air_conditioner:065]: Requesting status
+[08:59:37.949][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:39.020][D][uart_debug:113]: <<< F4 F5 01 40 49 01 00 FE 01 01 01 01 00 66 00 01 00 00 30 15 17 15 80 80 00 01 01 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 14 12 12 28 00 00 FC 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 C4 F4 FB
+[08:59:39.021][D][climate.air_conditioner:364]: Parsing OK message: 01.40.49.01.00.FE.01.01.01.01.00.66.00.01.00.00.30.15.17.15.80.80.00.01.01.00.00.00.00.00.00.00.00.00.00.00.01.00.00.00.00.00.14.12.12.28.00.00.FC.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00.00 (76) (76)
+[08:59:39.021][D][climate.air_conditioner:420]: decode_message
+[08:59:39.022][D][climate.air_conditioner:453]: Seem to be OFF.
+[08:59:39.022][D][climate.air_conditioner:468]: fan speed 257
+[08:59:39.022][D][climate.air_conditioner:489]: acc status new
+[08:59:39.023][S][climate]: 'Hisense' >>
+[08:59:39.023][S][climate]:   Mode: OFF
+[08:59:39.023][S][climate]:   Fan Mode: OFF
+[08:59:39.023][S][climate]:   Target Temperature: 21.00°C
+[08:59:39.025][S][sensor]: 'Indoor Temperature' >> 23 °C
+[08:59:39.026][S][sensor]: 'Indoor Coil Temperature' >> 21 °C
+[08:59:39.027][S][sensor]: 'Indoor Humidit' >> 128 %
+[08:59:39.028][S][sensor]: 'Outdoor Temperature' >> 0 °C
+[08:59:39.029][S][sensor]: 'Outdoor Coil Temperature' >> 0 °C
+[08:59:40.671][D][climate.air_conditioner:065]: Requesting status
+[08:59:40.672][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:48.248][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:59:50.258][D][climate.air_conditioner:053]: Retrying communication
+[08:59:50.258][D][climate.air_conditioner:065]: Requesting status
+[08:59:50.259][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[08:59:58.449][D][climate.air_conditioner:028]: Communication timeout - resetting
+[08:59:59.943][D][climate.air_conditioner:048]: Waiting 555 ms before retry (errors: 0)
+[09:00:00.308][D][climate.air_conditioner:053]: Retrying communication
+[09:00:00.321][D][climate.air_conditioner:065]: Requesting status
+[09:00:00.322][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[09:00:08.330][D][climate.air_conditioner:028]: Communication timeout - resetting
+[09:00:09.058][D][climate.air_conditioner:048]: Waiting 1588 ms before retry (errors: 0)
+[09:00:10.340][D][climate.air_conditioner:053]: Retrying communication
+[09:00:10.341][D][climate.air_conditioner:065]: Requesting status
+[09:00:10.413][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[09:00:18.366][D][climate.air_conditioner:028]: Communication timeout - resetting
+[09:00:20.369][D][climate.air_conditioner:053]: Retrying communication
+[09:00:20.424][D][climate.air_conditioner:065]: Requesting status
+[09:00:20.425][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[09:00:28.589][D][climate.air_conditioner:028]: Communication timeout - resetting
+[09:00:30.092][D][climate.air_conditioner:048]: Waiting 630 ms before retry (errors: 0)
+[09:00:30.414][D][climate.air_conditioner:053]: Retrying communication
+[09:00:30.420][D][climate.air_conditioner:065]: Requesting status
+[09:00:30.420][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB
+[09:00:38.454][D][climate.air_conditioner:028]: Communication timeout - resetting
+[09:00:39.115][D][climate.air_conditioner:048]: Waiting 1654 ms before retry (errors: 0)
+[09:00:40.463][D][climate.air_conditioner:053]: Retrying communication
+[09:00:40.463][D][climate.air_conditioner:065]: Requesting status
+[09:00:40.466][D][uart_debug:113]: >>> F4 F5 00 40 0C 00 00 01 01 FE 01 00 00 66 00 00 00 01 B3 F4 FB

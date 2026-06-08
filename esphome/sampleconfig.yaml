@@ -1,0 +1,109 @@
+# External Components
+external_components:
+  - source:
+      type: local
+      path: components
+    # components: [hisense_ac]
+    components: [hisense]
+
+esphome:
+  name: acremote01
+  friendly_name: acremote01
+  
+  on_boot:
+    priority: -100
+    then:
+      - logger.log: "Hisense AC Controller (ESP8266) initialized"
+
+esp8266:
+  board: esp01_1m
+  framework:
+    version: recommended
+
+# Enable logging
+logger:
+  level: DEBUG  # Use INFO instead of DEBUG
+  baud_rate: 0  # Disable UART logging
+  logs:
+    uart: DEBUG  # Reduce UART logging
+    sensor: DEBUG
+    climate: DEBUG
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "somebase64encodedsecret"
+
+ota:
+  - platform: esphome
+    password: "some password"
+
+wifi:
+  use_address: 10.1.143.107
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Acremote01 Fallback Hotspot"
+    password: "somepassword"
+
+  # Power save mode for ESP8266
+  power_save_mode: LIGHT
+
+captive_portal:
+    
+####### CUSTOM PART FOR AC #######
+uart:
+  id: ac_uart
+  tx_pin: GPIO1  # TX pin (limited options on ESP8266)
+  rx_pin: GPIO3  # RX pin (limited options on ESP8266)
+  baud_rate: 9600
+  stop_bits: 1
+  data_bits: 8
+  parity: NONE
+  rx_buffer_size: 256  # Smaller buffer for ESP8266
+
+
+  debug:
+    direction: BOTH
+    dummy_receiver: true
+    after:
+      delimiter: [0xF4, 0xFB]
+    sequence:
+      - lambda: |-
+          UARTDebug::log_hex(direction, bytes, ' ');
+
+climate:
+  - platform: hisense
+    name: Hisense
+    uart_id: ac_uart
+    id: hisense_ac
+
+sensor:
+  - platform: hisense
+    hisense_id: hisense_ac
+    indoor_coil_temperature:
+      name: Indoor Coil Temperature
+  - platform: hisense
+    hisense_id: hisense_ac
+    outdoor_coil_temperature:
+      name: Outdoor Coil Temperature
+  - platform: hisense
+    hisense_id: hisense_ac
+    indoor_temperature:
+      name: Indoor Temperature
+  - platform: hisense
+    hisense_id: hisense_ac
+    indoor_humidity:
+      name: Indoor Humidity
+  - platform: hisense
+    hisense_id: hisense_ac
+    outdoor_temperature:
+      name: Outdoor Temperature
+
+switch:
+  - platform: hisense
+    hisense_id: hisense_ac
+    hisens_display:
+      name: Hisens Display Enable

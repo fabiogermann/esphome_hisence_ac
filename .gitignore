@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# ESPHome
+.esphome/
+build/
+secrets.yaml
+!tests/data/*.yaml
+
+# Editor
+.vscode/
+.idea/
+*.swp

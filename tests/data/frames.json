@@ -1,0 +1,81 @@
+{
+  "_comment": "Real Hisense AC UART frames captured from output.txt and historical analysis. Format: F4 F5 | payload | CS_hi CS_lo | F4 FB. Checksum = sum(bytes from index 2 up to but excluding CS bytes) & 0xFFFF, big-endian (CS_hi first).",
+  "frames": [
+    {
+      "name": "status_query",
+      "type": "command",
+      "direction": "tx",
+      "hex": "F4F500400C00000101FE0100006600000001B3F4FB",
+      "expected_checksum": "01B3",
+      "length": 21,
+      "source": "captured from device + helpers/analyze_live_data.py",
+      "description": "Standard 21-byte status query (0x66) sent by ESPHome to the AC"
+    },
+    {
+      "name": "status_response_temp19",
+      "type": "response",
+      "direction": "rx",
+      "hex": "F4F50140490100FE010101010066000100003015171580800001010000000000000000000000010000000000131212280000FC00000000000000000000000000000000000000000000000000000004C3F4FB",
+      "expected_checksum": "04C3",
+      "length": 82,
+      "source": "output.txt 08:58:11",
+      "description": "82-byte status response, target 21C, indoor 23C, mode OFF (bit 3 of byte[16]=0x30 not set)"
+    },
+    {
+      "name": "status_response_temp20",
+      "type": "response",
+      "direction": "rx",
+      "hex": "F4F50140490100FE010101010066000100003015171580800001010000000000000000000000010000000000141212280000FC00000000000000000000000000000000000000000000000000000004C4F4FB",
+      "expected_checksum": "04C4",
+      "length": 82,
+      "source": "output.txt 09:00:23",
+      "description": "Variant of the previous frame with one byte different"
+    },
+    {
+      "name": "truncated_frame_bug",
+      "type": "response",
+      "direction": "rx",
+      "hex": "F4F50101010101006600010000301517",
+      "expected_checksum": null,
+      "length": 16,
+      "source": "output.txt 08:57:13.683",
+      "description": "Truncated frame observed in the wild - missing trailing bytes including footer. Parser must reject without crashing."
+    },
+    {
+      "name": "headerless_fragment_a",
+      "type": "garbage",
+      "direction": "rx",
+      "hex": "0101010100660001000030151715808000010100000000000000000000000000000010BB3E840220000080808010107F777F0800000000000000000000000000000004C4F4FB",
+      "expected_checksum": null,
+      "length": 70,
+      "source": "output.txt 08:56:28.689",
+      "description": "First response captured after boot - missing F4 F5 header entirely. Should be discarded by a resync-safe parser without disrupting the next frame."
+    },
+    {
+      "name": "headerless_fragment_b",
+      "type": "garbage",
+      "direction": "rx",
+      "hex": "0000000000000000000000000000000000000080837801000000000000000000000000000000000000000000000CC4F4FB",
+      "expected_checksum": null,
+      "length": 49,
+      "source": "output.txt 08:59:19",
+      "description": "Stray bytes captured between frames - mostly zeros plus footer. Parser must drop without crashing."
+    }
+  ],
+  "mode_encoding": {
+    "_comment": "Mode is encoded in payload byte 16: high nibble = mode code, bit 3 (0x08) = power on",
+    "FAN_ONLY": 0,
+    "HEAT": 1,
+    "COOL": 2,
+    "DRY": 3,
+    "AUTO": 4,
+    "OFF": 12
+  },
+  "swing_values": {
+    "_comment": "Swing byte encoding used by send_status (status[32])",
+    "BOTH": "0xF0",
+    "VERTICAL": "0x30",
+    "HORIZONTAL": "0x70",
+    "OFF": "0x50"
+  }
+}
