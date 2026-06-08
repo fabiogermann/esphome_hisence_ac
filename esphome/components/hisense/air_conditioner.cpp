@@ -170,73 +170,115 @@ void AirConditioner::send_status() {
   }
   auto next_hvac_settings = next_hvac_settings_.value();
 
+  // ---------------------------------------------------------------------
+  // Build a 50-byte command frame.
+  //
+  // The Hisense UART protocol uses a fixed envelope for command frames
+  // (message type 0x65). The historical implementation in the original
+  // repo used pre-canned constant frames per mode; this method derives
+  // the same byte layout dynamically. Crucial fields:
+  //
+  //   status[16] = command discriminator
+  //                 0x00 = no mode change (temperature-only)
+  //                 0x01 = set mode to COOL / HEAT / DRY / AUTO / OFF
+  //                 0x07 = set FAN-ONLY mode
+  //   status[17] = 0x01 when status[16] selects a mode-change command,
+  //                else 0x00.
+  //   status[18] = mode byte. High nibble identifies the mode (matches
+  //                the high nibble the AC reports back in its status
+  //                response):
+  //                   0x10 = FAN_ONLY
+  //                   0x30 = HEAT
+  //                   0x50 = COOL
+  //                   0x70 = DRY
+  //                   0x90 = AUTO
+  //                   0x04 = OFF sentinel
+  //                Low nibble = 0 for mode-change commands.
+  //   status[19] = (target_temp_C << 1) | 1
+  //   status[31..35] envelope for mode-change commands:
+  //                   31=0x10 32=0x01 33=0x04 34=0x00 35=0x10
+  //                (All zero for temp-only commands.)
+  //
+  // Without status[16]=0x01 / status[17]=0x01 / the [31..35] envelope,
+  // the AC silently ignores mode changes -- which was the cause of the
+  // observed "FAN_ONLY worked but switching to COOL did nothing" bug.
+  // ---------------------------------------------------------------------
+
   std::vector<uint8_t> status{
-      0xF4,
-      0xF5, // 1
-      0x00, // 2
-      0x40, // 3
-      0x29, // 4
-      0x00, // 5
-      0x00, // 6
-      0x01, // 7
-      0x01, // 8
-      0xFE, // 9
-      0x01, // 10
-      0x00, // 11
-      0x00, // 12
-      0x65, // 13
-      0x00, // 14
-      0x00, // 15
-      0x00, // 16
-      0x00, // 17
-      0x00, // 18
-      0x00, // 19
-      0x00, // 20
-      0x00, // 21
-      0x00, // 22
-      0x04, // 23
-      0x00, // 24
-      0x00, // 25
-      0x00, // 26
-      0x00, // 27
-      0x00, // 28
-      0x00, // 29
-      0x00, // 30
-      0x00, // 31
-      0x00, // 32
-      0x00, // 33
-      0x00, // 34
-      0x00, // 35
-      0x00, // 36
-      0x00, // 37
-      0x00, // 38
-      0x00, // 39
-      0x00, // 40
-      0x00, // 41
-      0x00, // 42
-      0x00, // 43
-      0x00, // 44
-      0x00  // 45
-  };
+      0xF4, 0xF5, 0x00, 0x40, 0x29, 0x00, 0x00, 0x01, 0x01, 0xFE,
+      0x01, 0x00, 0x00, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+  bool send_mode_envelope = false;
+
+  // -----------------------------------------------------------------
+  // Mode change
+  // -----------------------------------------------------------------
   if (next_hvac_settings.mode != nullopt) {
-    int mode = encode_climateMode((next_hvac_settings.mode.value()));
+    const auto requested_mode = next_hvac_settings.mode.value();
 
-    if (next_hvac_settings.mode.value() == climate::CLIMATE_MODE_OFF) {
-      status[18] = 0b00000100;
-
+    if (requested_mode == climate::CLIMATE_MODE_OFF) {
+      // Historical OFF frame uses a different envelope; mirror it.
+      status[16] = 0x00;
+      status[17] = 0x01;
+      status[18] = 0x04;
+      status[31] = 0x00;
+      status[32] = 0x01;
+      status[33] = 0x55;
+      status[34] = 0x00;
+      status[35] = 0x01;
+      send_mode_envelope = true;
     } else {
-      uint8_t m_mode = mode << 1;
-      m_mode |= (1ul << 0);
-      m_mode = m_mode << 4;
-      m_mode |= 0b00001100; // To on
+      // Mode-change command. status[16] = 0x01 for COOL/HEAT/DRY/AUTO,
+      // 0x07 for FAN_ONLY. Discriminator was reverse-engineered from
+      // the historical mode_fan / mode_cool / mode_heat / mode_dry
+      // frames in the original repo.
+      uint8_t mode_high_nibble = 0;
+      switch (requested_mode) {
+      case climate::CLIMATE_MODE_FAN_ONLY:
+        status[16] = 0x07;
+        mode_high_nibble = 0x1;
+        break;
+      case climate::CLIMATE_MODE_HEAT:
+        status[16] = 0x01;
+        mode_high_nibble = 0x3;
+        break;
+      case climate::CLIMATE_MODE_COOL:
+        status[16] = 0x01;
+        mode_high_nibble = 0x5;
+        break;
+      case climate::CLIMATE_MODE_DRY:
+        status[16] = 0x01;
+        mode_high_nibble = 0x7;
+        break;
+      case climate::CLIMATE_MODE_AUTO:
+      case climate::CLIMATE_MODE_HEAT_COOL:
+        status[16] = 0x01;
+        mode_high_nibble = 0x9;
+        break;
+      default:
+        ESP_LOGW(TAG, "Unsupported climate mode requested: %d",
+                 static_cast<int>(requested_mode));
+        this->next_hvac_settings_ = nullopt;
+        return;
+      }
+      status[17] = 0x01;
+      status[18] = mode_high_nibble << 4;
 
-      status[18] = m_mode;
-      // If the user only changed the mode (e.g. OFF -> FAN_ONLY), HA does
-      // not send a target temperature with the call. Re-use the current
-      // climate target so we don't transmit garbage. The current target
-      // can be NAN on the very first call after boot; fall back to a sane
-      // default in that case so we never feed NAN to the uint8_t cast.
+      // Mode-change command envelope (status[31..35]).
+      status[31] = 0x10;
+      status[32] = 0x01;
+      status[33] = 0x04;
+      status[34] = 0x00;
+      status[35] = 0x10;
+      send_mode_envelope = true;
+
+      // Mode-only call from HA carries no target temperature. Re-use the
+      // current setpoint, falling back to a safe default if it has never
+      // been set (NaN on first call after boot would otherwise produce
+      // status[19] = 0x01 = 0 C and the AC would reject the frame).
       if (next_hvac_settings.target_temperature == nullopt) {
         if (std::isfinite(this->target_temperature) &&
             this->target_temperature >= 16.0f &&
@@ -249,51 +291,51 @@ void AirConditioner::send_status() {
     }
   }
 
+  // -----------------------------------------------------------------
+  // Target temperature
+  // -----------------------------------------------------------------
   if (next_hvac_settings.target_temperature != nullopt) {
     const float requested = next_hvac_settings.target_temperature.value();
     if (!std::isfinite(requested) || requested < 16.0f || requested > 30.0f) {
       ESP_LOGW(TAG, "Refusing to send out-of-range target temperature %.1f",
                requested);
-      // Clear the pending settings so the next loop() iteration does not
-      // re-enter send_status() endlessly (this was the source of the
-      // "Not valid tmp!" log flood when changing mode from OFF -> FAN_ONLY
-      // before a target had ever been set).
+      // Clear pending so the loop does not re-enter send_status() endlessly.
       this->next_hvac_settings_ = nullopt;
       return;
     }
-
-    auto my_tmp = static_cast<uint8_t>(requested);
-    uint8_t c = my_tmp;
-    uint8_t tempX = 0;
-    tempX = (c << 1);
-    tempX |= (1ul << 0);
-    status[19] = tempX;
-  }
-  status[36] = 0b01000000;
-
-
-  if (display_enable) {
-    status[36] = 0b11000000;
-  } else {
-    status[36] = 0b01000000;
+    const uint8_t my_tmp = static_cast<uint8_t>(requested);
+    status[19] = static_cast<uint8_t>((my_tmp << 1) | 0x01);
   }
 
+  // -----------------------------------------------------------------
+  // Swing mode (optional add-on on the same frame)
+  // -----------------------------------------------------------------
   if (next_hvac_settings.swing_mode != nullopt) {
-    // TODO: Combine with decoding
-    auto next_swing_setting = next_hvac_settings.swing_mode;
-    if (next_swing_setting == climate::ClimateSwingMode::CLIMATE_SWING_BOTH) {
-      status[32] = 0b11110000;
-    } else if (next_swing_setting ==
-               climate::ClimateSwingMode::CLIMATE_SWING_OFF) {
-      status[32] = 0b01010000;
-    } else if (next_swing_setting ==
-               climate::ClimateSwingMode::CLIMATE_SWING_VERTICAL) {
-      status[32] = 0b00110000;
-    } else if (next_swing_setting ==
-               climate::ClimateSwingMode::CLIMATE_SWING_HORIZONTAL) {
-      status[32] = 0b01110000;
+    auto next_swing_setting = next_hvac_settings.swing_mode.value();
+    switch (next_swing_setting) {
+    case climate::CLIMATE_SWING_BOTH:
+      status[32] = 0xF0;
+      break;
+    case climate::CLIMATE_SWING_OFF:
+      status[32] = 0x50;
+      break;
+    case climate::CLIMATE_SWING_VERTICAL:
+      status[32] = 0x30;
+      break;
+    case climate::CLIMATE_SWING_HORIZONTAL:
+      status[32] = 0x70;
+      break;
+    default:
+      break;
     }
   }
+
+  // -----------------------------------------------------------------
+  // Display LED (status[36])
+  // -----------------------------------------------------------------
+  status[36] = display_enable ? 0b11000000 : 0b01000000;
+
+  (void)send_mode_envelope;  // Reserved for future per-frame-type logging.
 
   send_raw(status);
   this->next_hvac_settings_ = nullopt;

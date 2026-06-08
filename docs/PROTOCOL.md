@@ -69,29 +69,33 @@ below are relative to the body, i.e. `body[0]` is the first byte after `F4 F5`.
 > `0x00` (hence "Outdoor Temperature 0 °C" in HA). The actual outdoor
 > sensor block lives at `body[42..45]`.
 
-## Mode byte
+## Mode byte (status response)
 
-`body[16]` packs both the climate mode and the power state.
+`body[16]` of a status response packs both the climate mode and the power
+state.
 
 - **Bit 3** (`0x08`): power on (1) or off (0).
-- **High nibble**: `((mode << 1) | 1)` — i.e. an odd value where the low bit
-  of the nibble is always 1 and the upper 3 bits encode the mode.
+- **High nibble** (`body[16] >> 4`): mode code from the table below.
+  *(Despite the firmware-side command encoding looking like
+  `((mode << 1) | 1)`, the AC reports the plain mode code in its
+  responses — i.e. the response high-nibble for COOL is `0x2`, for HEAT
+  `0x1`, etc. See [Command frames](#command-frames-esp--ac) for the
+  separate command-side encoding.)*
 
 | Mode code | HA mode  |
 |-----------|----------|
 | 0         | FAN_ONLY |
 | 1         | HEAT     |
 | 2         | COOL     |
-| 3         | DRY      |
+| 3         | DRY     |
 | 4–7       | AUTO     |
 | 12        | OFF      |
 
-Worked example for COOL, powered on:
+Worked example: a status frame with `body[16] = 0x28`:
 
 ```
-mode    = 2
-nibble  = (2 << 1) | 1 = 5
-byte    = (5 << 4) | 0b00001100 = 0x5C
+power_on = (0x28 & 0x08) != 0      = true
+mode_id  = (0x28 >> 4)              = 0x2 -> COOL
 ```
 
 ## Target temperature byte
@@ -135,3 +139,49 @@ BOTH.)
 | 18   | HIGH     |
 
 Codes not in the table are reported as "unknown" by the firmware.
+
+## Command frames (ESP → AC)
+
+Command frames are 50 bytes long and have a fixed envelope. Body offsets
+that vary by command are summarised below; everything else stays zero.
+
+| Body offset | Purpose | Mode-change frame | Temp-only frame | OFF frame |
+|-------------|---------|-------------------|-----------------|-----------|
+| `body[14]`  | sub-command selector | `0x01` (cool/heat/dry/auto) or `0x07` (fan-only) | `0x00` | `0x00` |
+| `body[15]`  | "active" flag | `0x01` | `0x00` | `0x01` |
+| `body[16]`  | mode byte (see table below) | mode nibble << 4 | `0x00` | `0x04` |
+| `body[17]`  | target temperature `((C<<1)|1)` | set | set | `0x00` |
+| `body[29]`  | envelope | `0x10` | `0x00` | `0x00` |
+| `body[30]`  | envelope (or swing override) | `0x01` | `0x00` | `0x01` |
+| `body[31]`  | envelope | `0x04` | `0x00` | `0x55` |
+| `body[32]`  | envelope | `0x00` | `0x00` | `0x00` |
+| `body[33]`  | envelope | `0x10` | `0x00` | `0x01` |
+| `body[34]`  | display LED (`0xC0` on, `0x40` off) | set | set | set |
+
+> Note: in the C++ source the buffer variable `status[i]` includes the
+> `F4 F5` header at indices 0 and 1, so `status[16]` in the code is
+> `body[14]` here. The Python reference in
+> `tests/test_command_frames.py` uses the same `status[i]` (with header)
+> indexing.
+
+The command-side mode nibble in `body[16]` follows a different convention
+from the response-side `body[16] >> 4`:
+
+| HA mode  | Response high nibble | Command `body[16]` |
+|----------|----------------------|--------------------|
+| FAN_ONLY | 0                    | `0x10` |
+| HEAT     | 1                    | `0x30` |
+| COOL     | 2                    | `0x50` |
+| DRY      | 3                    | `0x70` |
+| AUTO     | 4–7                  | `0x90` |
+| OFF      | 12                   | `0x04` (sentinel) |
+
+> **Why the asymmetry?** The historical community implementation captured
+> on-the-wire command frames per mode. Those captures show the AC accepts
+> only this exact envelope; in particular **omitting `body[14]=0x01` and
+> the `body[29..33]` envelope makes the AC silently ignore the command**
+> — even though such a "minimal" frame still checksums correctly. This
+> was the cause of the "switching from FAN_ONLY to COOL does nothing"
+> bug. The driver therefore reconstructs the full historical envelope in
+> `send_status`. See `tests/test_command_frames.py` for the canonical
+> reference frames.
