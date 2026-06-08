@@ -23,30 +23,45 @@ void AirConditioner::loop() {
     print_extra_log_in_this_loop = false;
   }
 
-  if (millis() - this->last_recived_ > 8000 &&
-      millis() - this->last_status_change > 8000) {
-    ESP_LOGD(TAG, "Communication timeout - resetting");
-    this->rx_buffer_.clear();
-    this->consecutive_errors_ = 0;
+  // Comm-watchdog: if no bytes have arrived for a while AND we haven't just
+  // changed status, treat the link as dead and back off. We intentionally do
+  // NOT clear rx_buffer_ here - the resync-safe extractor in try_extract_frame_
+  // discards garbage on its own, and clearing here can throw away a partially
+  // received frame.
+  if (millis() - this->last_recived_ > COMM_TIMEOUT_MS &&
+      millis() - this->last_status_change > COMM_TIMEOUT_MS) {
+    ESP_LOGD(TAG, "Communication timeout - resetting (errors: %u)",
+             static_cast<unsigned>(this->consecutive_errors_));
+    if (this->consecutive_errors_ < 0xFF) {
+      this->consecutive_errors_++;
+    }
     change_status(Status::after_fail);
     return;
   }
 
   if (status == Status::after_fail) {
-    this->rx_buffer_.clear();
+    // Flush any pending hardware bytes so the next retry starts clean. We do
+    // not touch rx_buffer_; if a real frame is mid-flight in there, the
+    // extractor will pick it up after the backoff.
     uint8_t byte;
     while (available() && read_byte(&byte)) {
-      // Flush any remaining bytes
+      // intentional drain
     }
     flush();
 
     auto time_since_fail = millis() - last_status_change;
-    auto retry_delay = (consecutive_errors_ > 3) ? 4000 : 2000;
+    // Exponential-ish backoff capped at 10s. Many Hisense indoor units go
+    // semi-dormant when the AC is OFF and ignore queries for tens of seconds.
+    uint32_t retry_delay = RETRY_DELAY_BASE_MS;
+    if (consecutive_errors_ > 2) retry_delay = 4000;
+    if (consecutive_errors_ > 5) retry_delay = 7000;
+    if (consecutive_errors_ > 8) retry_delay = 10000;
 
     if (time_since_fail < retry_delay) {
       if (print_extra_log_in_this_loop)
-        ESP_LOGD(TAG, "Waiting %d ms before retry (errors: %d)",
-                 retry_delay - time_since_fail, consecutive_errors_);
+        ESP_LOGD(TAG, "Waiting %u ms before retry (errors: %u)",
+                 static_cast<unsigned>(retry_delay - time_since_fail),
+                 static_cast<unsigned>(consecutive_errors_));
       return;
     }
 
@@ -61,7 +76,8 @@ void AirConditioner::loop() {
     return;
   }
 
-  if (millis() - this->last_recived_ > 2000 && status == Status::standby) {
+  if (millis() - this->last_recived_ > QUERY_PERIOD_MS &&
+      status == Status::standby) {
     ESP_LOGD(TAG, "Requesting status");
     std::vector<uint8_t> requst_status{0xF4, 0xF5, 0x00, 0x40, 0x0C, 0x00,
                                        0x00, 0x01, 0x01, 0xFE, 0x01, 0x00,
@@ -99,8 +115,9 @@ void AirConditioner::loop() {
     // extraction removes its bytes (plus any leading garbage) from rx_buffer_.
     std::vector<uint8_t> payload;
     while (this->try_extract_frame_(payload)) {
-      ESP_LOGD(TAG, "Parsing OK message: %s (%d)",
-               format_hex_pretty(payload).c_str(), payload.size());
+      ESP_LOGV(TAG, "Parsing OK message: %s (%u)",
+               format_hex_pretty(payload).c_str(),
+               static_cast<unsigned>(payload.size()));
       this->decode_message(payload);
       any_frame_decoded = true;
       this->consecutive_errors_ = 0;
@@ -443,7 +460,7 @@ short int AirConditioner::checksum(const std::vector<uint8_t> &payload) {
 }
 
 void AirConditioner::decode_message(std::vector<uint8_t> payload) {
-  ESP_LOGD(TAG, "decode_message");
+  ESP_LOGV(TAG, "decode_message");
 
   static optional<climate::ClimateFanMode> decode_wind_codes[19]{
       climate::ClimateFanMode::CLIMATE_FAN_OFF,
@@ -474,9 +491,9 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
     if (is_on) {
       auto z = decode_climateMode((payload[16] >> 4));
       this->mode = z;
-      ESP_LOGD(TAG, "mode %d", z);
+      ESP_LOGV(TAG, "mode %d", z);
     } else {
-      ESP_LOGD(TAG, "Seem to be OFF.");
+      ESP_LOGV(TAG, "Seem to be OFF.");
       this->mode = climate::CLIMATE_MODE_OFF;
     }
   }
@@ -491,7 +508,7 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
   {
     auto wind = decode_wind_codes[payload[14]];
     this->fan_mode = wind;
-    ESP_LOGD(TAG, "fan speed %d", wind);
+    ESP_LOGV(TAG, "fan speed %d", wind);
   }
 
   // Swig detect
@@ -512,7 +529,7 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
       swing_mode = climate::ClimateSwingMode::CLIMATE_SWING_OFF;
     }
   }
-  ESP_LOGD(TAG, "acc status new");
+  ESP_LOGV(TAG, "acc status new");
   this->publish_state();
 
 #ifdef USE_SENSOR

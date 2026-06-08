@@ -22,12 +22,12 @@ esp8266:
 
 # Enable logging
 logger:
-  level: DEBUG  # Use INFO instead of DEBUG
-  baud_rate: 0  # Disable UART logging
+  level: INFO            # DEBUG noticeably slows the loop on ESP8266 and can
+                         # cause dropped UART bytes. Bump to DEBUG only when
+                         # diagnosing a specific issue.
+  baud_rate: 0           # Disable UART logging (GPIO1/3 are used by the AC).
   logs:
-    uart: DEBUG  # Reduce UART logging
-    sensor: DEBUG
-    climate: DEBUG
+    climate.air_conditioner: INFO
 
 # Enable Home Assistant API
 api:
@@ -64,17 +64,25 @@ uart:
   stop_bits: 1
   data_bits: 8
   parity: NONE
-  rx_buffer_size: 256  # Smaller buffer for ESP8266
+  # The hardware FIFO on ESP8266 is small (~128 B). A 9600 baud line delivers
+  # ~960 B/s, so an 82-byte status response takes ~85 ms. Loop iterations
+  # under load can easily exceed that, dropping bytes if the SW buffer is
+  # tight. 512 B leaves margin without hurting RAM.
+  rx_buffer_size: 512
 
-
-  debug:
-    direction: BOTH
-    dummy_receiver: true
-    after:
-      delimiter: [0xF4, 0xFB]
-    sequence:
-      - lambda: |-
-          UARTDebug::log_hex(direction, bytes, ' ');
+  # NOTE: The uart.debug block is intentionally disabled. It logs every
+  # inbound frame synchronously via ESP_LOGD which costs several ms per
+  # frame on ESP8266 and is the prime cause of dropped/short reads on the
+  # AC's tight inter-frame timing. Re-enable only for one-shot debugging.
+  #
+  # debug:
+  #   direction: BOTH
+  #   dummy_receiver: true
+  #   after:
+  #     delimiter: [0xF4, 0xFB]
+  #   sequence:
+  #     - lambda: |-
+  #         UARTDebug::log_hex(direction, bytes, ' ');
 
 climate:
   - platform: hisense

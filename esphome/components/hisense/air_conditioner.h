@@ -78,6 +78,20 @@ protected:
   /// any unknown variants while still bounding worst-case memory.
   static constexpr size_t MAX_FRAME_SIZE = 100;
 
+  /// Period between status queries when idle. Hisense indoor MCUs are slow
+  /// responders, especially when the AC is OFF. Polling faster than ~5s
+  /// causes the unit to drop queries and triggers the comm-timeout watchdog.
+  static constexpr uint32_t QUERY_PERIOD_MS = 5000;
+
+  /// Comm-watchdog timeout: how long we tolerate no inbound bytes before
+  /// declaring the link dead and entering the backoff state. Real units
+  /// sometimes go 15-25s without a response when in OFF mode.
+  static constexpr uint32_t COMM_TIMEOUT_MS = 15000;
+
+  /// Initial retry delay after a comm timeout. Backs off further with each
+  /// consecutive error (see loop()).
+  static constexpr uint32_t RETRY_DELAY_BASE_MS = 2000;
+
   void decode_message(std::vector<uint8_t>);
 
   void send_status();
