@@ -86,6 +86,54 @@ def test_send_status_range_guard_in_cpp_is_correct():
 
 
 # ---------------------------------------------------------------------------
+# resolve_target_temp_for_send — regression test for the "Not valid tmp!" flood
+#
+# Bug: when the user changed mode from OFF -> FAN_ONLY in HA, send_status()
+# rewrote next_hvac_settings.target_temperature = this->target_temperature,
+# which is NAN before any setpoint has ever been set. The uint8_t cast of
+# NAN produced 0, the < 16 guard tripped, ESP_LOGD("Not valid tmp!") fired,
+# and send_status() bailed *without* clearing next_hvac_settings_, so the
+# next loop() iteration re-entered the same path — flooding the log.
+# ---------------------------------------------------------------------------
+
+def test_resolve_target_temp_uses_default_when_current_is_nan():
+    """First mode-only call after boot: this->target_temperature is NaN."""
+    import math
+    assert (
+        protocol.resolve_target_temp_for_send(None, math.nan) == 22.0
+    )
+
+
+def test_resolve_target_temp_uses_default_when_current_is_none():
+    assert protocol.resolve_target_temp_for_send(None, None) == 22.0
+
+
+def test_resolve_target_temp_uses_current_when_valid():
+    assert protocol.resolve_target_temp_for_send(None, 24.0) == 24.0
+
+
+def test_resolve_target_temp_clamps_current_below_range_to_default():
+    """An out-of-range cached value must not poison the next frame."""
+    assert protocol.resolve_target_temp_for_send(None, 5.0) == 22.0
+    assert protocol.resolve_target_temp_for_send(None, 99.0) == 22.0
+
+
+def test_resolve_target_temp_requested_wins_when_valid():
+    assert protocol.resolve_target_temp_for_send(28.0, 22.0) == 28.0
+
+
+def test_resolve_target_temp_requested_out_of_range_returns_none():
+    """Explicit bad request: refuse to send (caller must clear pending)."""
+    assert protocol.resolve_target_temp_for_send(15.0, 22.0) is None
+    assert protocol.resolve_target_temp_for_send(31.0, 22.0) is None
+
+
+def test_resolve_target_temp_requested_nan_returns_none():
+    import math
+    assert protocol.resolve_target_temp_for_send(math.nan, 22.0) is None
+
+
+# ---------------------------------------------------------------------------
 # Swing byte
 # ---------------------------------------------------------------------------
 

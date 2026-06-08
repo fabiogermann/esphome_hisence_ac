@@ -20,6 +20,7 @@ initialising — see ``tests/test_streaming_parser.py``.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
@@ -331,6 +332,40 @@ def decode_mode_byte(byte: int) -> tuple[int, bool]:
     encoded = (byte >> 4) & 0x0F
     mode = (encoded - 1) >> 1
     return mode, True
+
+
+def resolve_target_temp_for_send(
+    requested: float | None,
+    current: float | None,
+    *,
+    default: float = 22.0,
+) -> float | None:
+    """Mirror the C++ ``send_status`` target-temperature handling.
+
+    HA may call ``control()`` with only a mode change (no target). In that
+    case the firmware re-uses ``this->target_temperature``. On the very
+    first call after boot ``this->target_temperature`` is NaN, which used
+    to slip through into a uint8_t cast and trigger the "Not valid tmp!"
+    log flood when the user changed mode from OFF to e.g. FAN_ONLY.
+
+    The new contract:
+      * If ``requested`` is finite and in 16..30 it wins.
+      * Else if ``current`` is finite and in 16..30 it is used.
+      * Else ``default`` (22 C) is used.
+      * If ``requested`` was given but is out of range / NaN we return
+        ``None`` to signal "refuse to send".
+    """
+
+    def _ok(v):
+        return v is not None and math.isfinite(v) and 16.0 <= v <= 30.0
+
+    if requested is not None:
+        if not _ok(requested):
+            return None
+        return float(requested)
+    if _ok(current):
+        return float(current)
+    return float(default)
 
 
 def encode_target_temp_byte(celsius: int) -> int:
