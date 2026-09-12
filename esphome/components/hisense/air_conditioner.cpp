@@ -436,23 +436,55 @@ bool AirConditioner::try_extract_frame_(std::vector<uint8_t> &payload_out) {
       continue;
     }
     // Helper lambda: try to validate a frame ending at the given footer index.
-    // Returns true and populates payload_out / consumes bytes if it validates.
+    // Two-pass: pass 1 validates the raw bytes exactly as before (units that
+    // do not stuff on TX - backwards compatible); pass 2 de-stuffs F4 F4
+    // pairs and re-validates (units that double literal 0xF4 on transmit -
+    // upstream pslawinski 8eb76f2 / e5a3ee3). The embedded checksum is over
+    // the DE-STUFFED body; the two checksum bytes may themselves be stuffed.
     auto try_validate_at = [this, &payload_out](size_t f) -> bool {
       if (f < 4) return false;
+
+      // Pass 1: raw bytes (unchanged behaviour for non-stuffing units).
       uint32_t s = 0;
       for (size_t i = 2; i + 2 < f; i++) s += this->rx_buffer_[i];
       s &= 0xFFFF;
       const uint8_t hi = (s >> 8) & 0xFF;
       const uint8_t lo = s & 0xFF;
-      if (hi != this->rx_buffer_[f - 2] ||
-          lo != this->rx_buffer_[f - 1]) {
-        return false;
+      if (hi == this->rx_buffer_[f - 2] && lo == this->rx_buffer_[f - 1]) {
+        payload_out.assign(this->rx_buffer_.begin() + 2,
+                           this->rx_buffer_.begin() + (f - 2));
+        this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                               this->rx_buffer_.begin() + f + 2);
+        return true;
       }
-      payload_out.assign(this->rx_buffer_.begin() + 2,
-                         this->rx_buffer_.begin() + (f - 2));
-      this->rx_buffer_.erase(this->rx_buffer_.begin(),
-                             this->rx_buffer_.begin() + f + 2);
-      return true;
+
+      // Pass 2: de-stuff F4 F4 -> F4 between header and footer, retry.
+      std::vector<uint8_t> destuffed;
+      destuffed.reserve(f - 2);
+      for (size_t i = 2; i < f; i++) {
+        destuffed.push_back(this->rx_buffer_[i]);
+        if (this->rx_buffer_[i] == 0xF4 && i + 1 < f &&
+            this->rx_buffer_[i + 1] == 0xF4) {
+          i++;  // collapse the stuffed pair
+        }
+      }
+      if (destuffed.size() < 3) return false;
+      uint32_t ds = 0;
+      for (size_t i = 0; i + 2 < destuffed.size(); i++) ds += destuffed[i];
+      ds &= 0xFFFF;
+      const uint8_t dhi = (ds >> 8) & 0xFF;
+      const uint8_t dlo = ds & 0xFF;
+      if (dhi == destuffed[destuffed.size() - 2] &&
+          dlo == destuffed[destuffed.size() - 1]) {
+        payload_out.assign(destuffed.begin(), destuffed.end() - 2);
+        this->rx_buffer_.erase(this->rx_buffer_.begin(),
+                               this->rx_buffer_.begin() + f + 2);
+        ESP_LOGD(TAG, "Recovered frame via RX de-stuffing (%u -> %u body bytes)",
+                 static_cast<unsigned>(f - 4),
+                 static_cast<unsigned>(payload_out.size()));
+        return true;
+      }
+      return false;
     };
 
     if (try_validate_at(footer_idx)) {
@@ -566,6 +598,15 @@ short int AirConditioner::checksum(const std::vector<uint8_t> &payload) {
 
 void AirConditioner::decode_message(std::vector<uint8_t> payload) {
   ESP_LOGV(TAG, "decode_message");
+
+  // Status-response bodies index up to payload[43]. Shorter frames (e.g.
+  // command ACKs, or a rare false-positive de-stuffed candidate) are not
+  // status frames - drop them rather than reading out of bounds.
+  if (payload.size() < 44) {
+    ESP_LOGV(TAG, "Ignoring %u-byte non-status frame",
+             static_cast<unsigned>(payload.size()));
+    return;
+  }
 
   static optional<climate::ClimateFanMode> decode_wind_codes[19]{
       climate::ClimateFanMode::CLIMATE_FAN_OFF,

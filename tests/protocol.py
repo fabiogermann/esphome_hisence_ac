@@ -137,6 +137,47 @@ def build_wire_frame(payload: bytes) -> bytes:
     return payload[:2] + stuff_wire(payload[2:] + cs) + FOOTER
 
 
+def destuff_wire(data: bytes) -> bytes:
+    """Collapse every ``F4 F4`` pair into a single ``0xF4`` (RX de-stuffing).
+
+    Some Hisense units double literal ``0xF4`` bytes on transmit (upstream
+    pslawinski commits 8eb76f2 / e5a3ee3). The embedded checksum is computed
+    over the de-stuffed stream, so de-stuff BEFORE validating.
+    """
+    out = bytearray()
+    i = 0
+    while i < len(data):
+        out.append(data[i])
+        if data[i] == ESCAPE_BYTE and i + 1 < len(data) and \
+                data[i + 1] == ESCAPE_BYTE:
+            i += 2
+        else:
+            i += 1
+    return bytes(out)
+
+
+def parse_frame_two_pass(buf: bytes) -> Frame:
+    """Two-pass frame validation: raw first, de-stuffed fallback.
+
+    Pass 1 accepts exactly what :func:`parse_frame` accepts — unchanged
+    behaviour for units that do not stuff on TX (backwards compatible).
+    Only when the raw checksum fails, every ``F4 F4`` pair between header
+    and footer is collapsed and the checksum is re-validated — rescuing
+    frames from units that stuff on TX (upstream pslawinski 8eb76f2 /
+    e5a3ee3). The two checksum bytes may themselves be stuffed, which is
+    why the de-stuff covers body + checksum bytes as one region.
+    """
+    try:
+        return parse_frame(buf)
+    except FrameError:
+        pass
+    if len(buf) < 8:
+        raise FrameError("too short for de-stuffed recovery")
+    destuffed = destuff_wire(buf[2:-2])  # body + checksum bytes
+    candidate = buf[:2] + destuffed + buf[-2:]
+    return parse_frame(candidate)
+
+
 @dataclass(frozen=True)
 class Frame:
     """Parsed Hisense UART frame."""
@@ -176,17 +217,15 @@ def parse_frame(buf: bytes) -> Frame:
 
 
 def parse_frame_lenient(buf: bytes) -> Frame:
-    """Parse ``buf`` with one recovery pass for the ``F4 F4 FB`` corruption.
+    """Parse ``buf`` with recovery for stuffed / doubled-``F4`` corruption.
 
-    Some Hisense indoor units occasionally emit a doubled ``0xF4`` byte
-    immediately before the footer, producing ``... cs_hi cs_lo F4 F4 FB`` on
-    the wire (frame is 1 byte longer than nominal). This helper mirrors the
-    same recovery the C++ extractor performs: if strict parsing fails on a
-    buffer whose final 3 bytes are ``F4 F4 FB``, drop one F4 and retry.
-    All other corruption modes still raise :class:`FrameError`.
+    Superset of :func:`parse_frame_two_pass`: tries raw, then de-stuffed
+    (which also covers the ``F4 F4 FB`` doubled-pre-footer corruption some
+    units emit), then the legacy ``F4 F4 FB`` -> ``F4 FB`` collapse for
+    completeness. All other corruption modes still raise :class:`FrameError`.
     """
     try:
-        return parse_frame(buf)
+        return parse_frame_two_pass(buf)
     except FrameError:
         pass
     # Doubled-F4 recovery: ... F4 F4 FB
@@ -318,11 +357,14 @@ class StreamingParser:
             if b == 0xFB:
                 raw = bytes(self.buf)
                 self.reset()
-                # Validate length, checksum, header
+                # Validate length, checksum, header. Two-pass: raw first,
+                # then de-stuffed (F4 F4 -> F4) for units that double 0xF4
+                # on transmit - pass 1 behaviour is unchanged for units
+                # that don't stuff, so this is backwards compatible.
                 if len(raw) < 8:
                     return None
                 try:
-                    return parse_frame(raw)
+                    return parse_frame_two_pass(raw)
                 except FrameError:
                     # The "frame" we just closed was bogus. Rescan its
                     # interior for a real F4 F5 header that we may have

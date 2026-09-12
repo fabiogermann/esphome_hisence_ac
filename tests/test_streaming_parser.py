@@ -200,3 +200,84 @@ def test_streaming_parser_idempotent_reset():
     parser.reset()
     assert len(parser) == 0
     assert parser.state is protocol.StreamingState.SEEK_F4
+
+
+# ---------------------------------------------------------------------------
+# RX de-stuffing (units that double literal 0xF4 on TX; upstream 8eb76f2
+# / e5a3ee3). Backwards compatible: raw frames take pass 1, only checksum
+# failures fall into the de-stuffed pass 2.
+# ---------------------------------------------------------------------------
+
+# Status-response-like body with literal 0xF4 bytes inside.
+BODY_WITH_F4S = bytes([
+    0x01, 0x40, 0x49, 0x01, 0x00, 0x66, 0x00, 0x01,
+    0xF4, 0x10, 0xF4, 0x20, 0x25, 0x80, 0x42, 0x03,
+])
+BODY_NO_F4 = bytes([
+    0x01, 0x40, 0x49, 0x01, 0x00, 0x66, 0x00, 0x01,
+    0x10, 0x20, 0x25, 0x80, 0x42, 0x03, 0x11, 0x22,
+])
+
+
+def test_destuffed_frame_recovered():
+    """A fully stuffed frame is de-stuffed and accepted."""
+    wire = protocol.build_wire_frame(protocol.HEADER + BODY_WITH_F4S)
+    assert wire != protocol.HEADER + BODY_WITH_F4S + \
+        protocol.checksum_bytes(protocol.HEADER + BODY_WITH_F4S) + \
+        protocol.FOOTER  # stuffing actually kicked in
+    parser = protocol.StreamingParser()
+    out = parser.feed(wire)
+    assert len(out) == 1
+    assert out[0].payload == BODY_WITH_F4S
+
+
+def test_unstuffed_frame_bit_identical():
+    """Pass 1 must accept raw frames unchanged (backwards compatible)."""
+    raw = protocol.build_frame(protocol.HEADER + BODY_NO_F4)
+    parser = protocol.StreamingParser()
+    out = parser.feed(raw)
+    assert len(out) == 1
+    assert out[0].raw == raw
+    assert out[0].payload == BODY_NO_F4
+
+
+def _find_body_with_low_cs(byte: int, body: bytearray) -> bytearray:
+    """Return ``body`` mutated so sum(body) & 0xFF == ``byte``."""
+    base = sum(body[:-1]) & 0xFF
+    body[-1] = (byte - base) & 0xFF
+    return body
+
+
+def test_destuffed_checksum_bytes_recovered():
+    """Checksum bytes that are themselves 0xF4 pass after de-stuffing."""
+    body = _find_body_with_low_cs(0xF4, bytearray(BODY_NO_F4))
+    # Wire ends: body... cs_hi F4 F4 (stuffed cs_lo) F4 FB
+    wire = protocol.build_wire_frame(protocol.HEADER + bytes(body))
+    raw = protocol.build_frame(protocol.HEADER + bytes(body))
+    assert len(wire) == len(raw) + 1  # exactly one stuffed byte (cs_lo)
+    parser = protocol.StreamingParser()
+    out = parser.feed(wire)
+    assert len(out) == 1
+    assert out[0].payload == bytes(body)
+
+
+def test_doubled_f4_before_footer_recovered():
+    """Stuffed final body byte + stuffed cs collapse correctly."""
+    body = _find_body_with_low_cs(0xF4, bytearray([0x01, 0x10, 0x20]))
+    wire = protocol.build_wire_frame(protocol.HEADER + bytes(body))
+    raw = protocol.build_frame(protocol.HEADER + bytes(body))
+    assert len(wire) == len(raw) + 1
+    parser = protocol.StreamingParser()
+    out = parser.feed(wire)
+    assert len(out) == 1
+    assert out[0].payload == bytes(body)
+
+
+def test_destuff_still_rejects_garbage():
+    """Garbage failing both passes is still dropped with clean resync."""
+    good = protocol.build_frame(protocol.HEADER + BODY_NO_F4)
+    garbage = b"\xF4\xF5\x01\x02\x03\x00\x00\xF4\xFB"
+    parser = protocol.StreamingParser()
+    out = parser.feed(garbage + good)
+    assert len(out) == 1
+    assert out[0].raw == good

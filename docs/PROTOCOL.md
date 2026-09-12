@@ -28,6 +28,16 @@ body/checksum contain `0xF4` (e.g. a 16 °C setpoint → checksum low byte
 (pslawinski) on-wire templates, which pre-stuff — e.g. `temp_16_C` ends
 `... 01 F4 F4 F4 FB`.
 
+**RX de-stuffing (two-pass).** Some units double literal `0xF4` on
+*transmit* as well (upstream pslawinski `8eb76f2` / `e5a3ee3`). The embedded
+checksum is then computed over the **de-stuffed** body. The extractor
+therefore validates each candidate frame twice: first the raw bytes (units
+that don't stuff — behaviour identical to before), and only on checksum
+failure after collapsing every `F4 F4` pair between header and footer.
+This is backwards compatible: frames that validated before validate
+identically on pass 1; pass 2 only rescues frames that would previously
+have been dropped as checksum errors.
+
 ## Message types
 
 The 12th byte of the body (offset 11 into the body, 13 into the full frame)
