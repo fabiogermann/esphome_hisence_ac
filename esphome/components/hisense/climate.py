@@ -22,7 +22,7 @@ AirConditioner = hisense_ac_ns.class_(
 )
 
 CONF_HISENSE_ID = "hisense_id"
-
+CONF_USE_FAHRENHEIT = "use_fahrenheit"
 
 CONFIG_SCHEMA = cv.All(
 #    climate.CLIMATE_SCHEMA.extend(
@@ -30,6 +30,7 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(AirConditioner),
             cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
+            cv.Optional(CONF_USE_FAHRENHEIT, default=False): cv.boolean,
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -73,3 +74,5 @@ async def to_code(config):
 
     if CONF_DISPLAY in config:
         cg.add(var.set_display_state(config[CONF_DISPLAY]))
+
+    cg.add(var.set_fahrenheit(config[CONF_USE_FAHRENHEIT]))

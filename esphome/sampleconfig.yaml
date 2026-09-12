@@ -89,6 +89,9 @@ climate:
     name: Hisense
     uart_id: ac_uart
     id: hisense_ac
+    # Set to true only if your unit's wire-protocol uses Fahrenheit (upstream
+    # PR #11, US-market AEH-W4A1). Most units (EU/global) speak Celsius.
+    # use_fahrenheit: false
 
 sensor:
   - platform: hisense

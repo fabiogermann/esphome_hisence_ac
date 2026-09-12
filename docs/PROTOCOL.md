@@ -20,6 +20,14 @@ UART protocol used by Hisense AEH-W4A1 / AEH-W4B1 Wi-Fi modules.
 header (exclusive) and the CS bytes (exclusive), masked to 16 bits, written
 high byte first.
 
+**TX byte-stuffing.** Any literal `0xF4` inside the body or the two checksum
+bytes is transmitted twice (`F4 F4`); header `F4 F5` and footer `F4 FB` are
+sent literal. The AC de-stuffs on receive. Without stuffing, frames whose
+body/checksum contain `0xF4` (e.g. a 16 °C setpoint → checksum low byte
+`0xF4`) collide with the `F4 FB` footer marker. Adopted from the upstream
+(pslawinski) on-wire templates, which pre-stuff — e.g. `temp_16_C` ends
+`... 01 F4 F4 F4 FB`.
+
 ## Message types
 
 The 12th byte of the body (offset 11 into the body, 13 into the full frame)
@@ -103,6 +111,13 @@ mode_id  = (0x28 >> 4)              = 0x2 -> COOL
 Encoded as `((celsius & 0xFF) << 1) | 1` — i.e. doubled and OR'd with 1.
 Decode by right-shifting by one. Valid range is 16–30 °C.
 
+**Fahrenheit variant.** US-market AEH-W4A1 units (upstream PR #11) carry
+Fahrenheit raw values in `body[17]`/`body[18]` (target + indoor temp) and in
+all temperature sensor offsets (`body[42..45]`). ESPHome Home-Assistant
+integration always works in °C, so when `use_fahrenheit: true` is set the
+component converts °F→°C on decode and °C→°F on every command. Default is
+Celsius.
+
 ## Swing
 
 `body[33]` packs swing into two bits:
@@ -142,46 +157,55 @@ Codes not in the table are reported as "unknown" by the firmware.
 
 ## Command frames (ESP → AC)
 
-Command frames are 50 bytes long and have a fixed envelope. Body offsets
-that vary by command are summarised below; everything else stays zero.
+Command frames are 50 bytes long. **Mode and power are packed into a single
+byte** `body[16]`; there is no separate "envelope" or command discriminator.
+Body offsets that vary by command:
 
-| Body offset | Purpose | Mode-change frame | Temp-only frame | OFF frame |
-|-------------|---------|-------------------|-----------------|-----------|
-| `body[14]`  | sub-command selector | `0x01` (cool/heat/dry/auto) or `0x07` (fan-only) | `0x00` | `0x00` |
-| `body[15]`  | "active" flag | `0x01` | `0x00` | `0x01` |
-| `body[16]`  | mode byte (see table below) | mode nibble << 4 | `0x00` | `0x04` |
+| Body offset | Purpose | Power-on mode frame | Temp-only frame | OFF frame |
+|-------------|---------|---------------------|-----------------|-----------|
+| `body[14]`  | (unused, `0x00`) | `0x00` | `0x00` | `0x00` |
+| `body[15]`  | (unused, `0x00`) | `0x00` | `0x00` | `0x00` |
+| `body[16]`  | **mode + power** (see table below) | `((m<<1)\|1)<<4 \| 0x0C` | `0x00` | `0x04` |
 | `body[17]`  | target temperature `((C<<1)|1)` | set | set | `0x00` |
-| `body[29]`  | envelope | `0x10` | `0x00` | `0x00` |
-| `body[30]`  | envelope (or swing override) | `0x01` | `0x00` | `0x01` |
-| `body[31]`  | envelope | `0x04` | `0x00` | `0x55` |
-| `body[32]`  | envelope | `0x00` | `0x00` | `0x00` |
-| `body[33]`  | envelope | `0x10` | `0x00` | `0x01` |
+| `body[21]`  | fixed flag | `0x04` | `0x04` | `0x04` |
+| `body[30]`  | swing override (optional) | set / `0x00` | `0x00` | `0x00` |
 | `body[34]`  | display LED (`0xC0` on, `0x40` off) | set | set | set |
 
 > Note: in the C++ source the buffer variable `status[i]` includes the
 > `F4 F5` header at indices 0 and 1, so `status[16]` in the code is
-> `body[14]` here. The Python reference in
+> `body[14]` here, and `status[18]` (the mode byte) is `body[16]`.
 > `tests/test_command_frames.py` uses the same `status[i]` (with header)
-> indexing.
+> indexing and pins the canonical reference frames.
 
-The command-side mode nibble in `body[16]` follows a different convention
-from the response-side `body[16] >> 4`:
+The command-side mode byte `body[16]` packs the mode in the **high nibble**
+and the power-on bits `0x0C` in the **low nibble**:
 
-| HA mode  | Response high nibble | Command `body[16]` |
-|----------|----------------------|--------------------|
-| FAN_ONLY | 0                    | `0x10` |
-| HEAT     | 1                    | `0x30` |
-| COOL     | 2                    | `0x50` |
-| DRY      | 3                    | `0x70` |
-| AUTO     | 4–7                  | `0x90` |
-| OFF      | 12                   | `0x04` (sentinel) |
+    body[16] = ((encode_mode << 1) | 1) << 4 | 0x0C   # power on
+    body[16] = 0x04                                     # OFF sentinel
+    body[16] = 0x00                                     # temp-only (no mode)
 
-> **Why the asymmetry?** The historical community implementation captured
-> on-the-wire command frames per mode. Those captures show the AC accepts
-> only this exact envelope; in particular **omitting `body[14]=0x01` and
-> the `body[29..33]` envelope makes the AC silently ignore the command**
-> — even though such a "minimal" frame still checksums correctly. This
-> was the cause of the "switching from FAN_ONLY to COOL does nothing"
-> bug. The driver therefore reconstructs the full historical envelope in
-> `send_status`. See `tests/test_command_frames.py` for the canonical
-> reference frames.
+| HA mode  | encode_mode | Command `body[16]` (power on) |
+|----------|-------------|-------------------------------|
+| FAN_ONLY | 0           | `0x1C` |
+| HEAT     | 1           | `0x3C` |
+| COOL     | 2           | `0x5C` |
+| DRY      | 3           | `0x7C` |
+| AUTO     | 4           | `0x9C` |
+| OFF      | —           | `0x04` (sentinel) |
+
+The high nibble is the command-side encoding `(report_id << 1) | 1`, distinct
+from the response-side mode IDs the AC reports back (FAN=0, HEAT=1, COOL=2,
+DRY=3, AUTO=4..7, OFF=12). The low nibble `0x0C` (bits 2+3) is what asserts
+power-on; without it the AC shifts its mode register but never starts the
+compressor.
+
+> **History / regression note.** An earlier rewrite (commit c1609e9) replaced
+> this single-byte encoding with `body[14]=0x01`, `body[15]=0x01`,
+> `body[16]=mode<<4` (e.g. COOL `0x50`) plus a `body[29..33]=10 01 04 00 10`
+> "envelope", reverse-engineered from the historical *mode-change-while-on*
+> frames in `hisense_ac.h`. That frame is accepted by the AC (one beep) but
+> **never asserts the power bit**, so power-on from Home Assistant stopped
+> working — the unit stayed OFF (status response `body[16]` with bit `0x08`
+> clear). The single-byte `0x?C` encoding above is what actually powers the
+> unit on from standby. See `tests/test_command_frames.py` for the canonical
+> reference frames and the regression guard.

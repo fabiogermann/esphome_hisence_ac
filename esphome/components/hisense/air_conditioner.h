@@ -42,6 +42,9 @@ public:
   }
   uint8_t waiting_for_response{0};
   void set_display_switch(bool state);
+  /// true when the attached unit speaks Fahrenheit on the wire
+  /// (AEH-W4A1 US variant, upstream PR #11). Default: Celsius.
+  void set_fahrenheit(bool v) { this->use_fahrenheit_ = v; }
 
 protected:
   GPIOPin *flow_control_pin_{nullptr};
@@ -113,6 +116,7 @@ protected:
   uint32_t total_bytes_received_{0};
 
   bool display_enable {true}; // Status of display screen of AC unit.
+  bool use_fahrenheit_{false}; // Wire temperatures in °F when true.
 
 
   float get_setup_priority() const override;

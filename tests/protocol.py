@@ -106,6 +106,37 @@ def build_frame(payload: bytes) -> bytes:
     return payload + checksum_bytes(payload) + FOOTER
 
 
+ESCAPE_BYTE = 0xF4
+
+
+def stuff_wire(data: bytes) -> bytes:
+    """Duplicate every literal 0xF4 in ``data`` (Hisense TX byte-stuffing).
+
+    The AC de-stuffs on receive, and upstream templates (pslawinski
+    messages.h) pre-stuff on transmit - e.g. temp_16_C's 0x01F4 checksum is
+    emitted as ``01 F4 F4 F4 FB``. Without stuffing, any frame whose body or
+    checksum contains 0xF4 collides with the F4 FB footer marker.
+    """
+    out = bytearray()
+    for b in data:
+        out.append(b)
+        if b == ESCAPE_BYTE:
+            out.append(ESCAPE_BYTE)
+    return bytes(out)
+
+
+def build_wire_frame(payload: bytes) -> bytes:
+    """Like :func:`build_frame`, but with TX byte-stuffing applied.
+
+    Header F4 F5 and footer F4 FB are sent literal; body bytes and the two
+    checksum bytes are stuffed via :func:`stuff_wire`.
+    """
+    if not payload.startswith(HEADER):
+        raise FrameError("payload must start with F4 F5 header")
+    cs = checksum_bytes(payload)
+    return payload[:2] + stuff_wire(payload[2:] + cs) + FOOTER
+
+
 @dataclass(frozen=True)
 class Frame:
     """Parsed Hisense UART frame."""

@@ -190,35 +190,29 @@ void AirConditioner::send_status() {
   // ---------------------------------------------------------------------
   // Build a 50-byte command frame.
   //
-  // The Hisense UART protocol uses a fixed envelope for command frames
-  // (message type 0x65). The historical implementation in the original
-  // repo used pre-canned constant frames per mode; this method derives
-  // the same byte layout dynamically. Crucial fields:
+  // Mode and power are packed into the SINGLE byte status[18]; there is no
+  // separate command discriminator or "envelope":
   //
-  //   status[16] = command discriminator
-  //                 0x00 = no mode change (temperature-only)
-  //                 0x01 = set mode to COOL / HEAT / DRY / AUTO / OFF
-  //                 0x07 = set FAN-ONLY mode
-  //   status[17] = 0x01 when status[16] selects a mode-change command,
-  //                else 0x00.
-  //   status[18] = mode byte. High nibble identifies the mode (matches
-  //                the high nibble the AC reports back in its status
-  //                response):
-  //                   0x10 = FAN_ONLY
-  //                   0x30 = HEAT
-  //                   0x50 = COOL
-  //                   0x70 = DRY
-  //                   0x90 = AUTO
-  //                   0x04 = OFF sentinel
-  //                Low nibble = 0 for mode-change commands.
-  //   status[19] = (target_temp_C << 1) | 1
-  //   status[31..35] envelope for mode-change commands:
-  //                   31=0x10 32=0x01 33=0x04 34=0x00 35=0x10
-  //                (All zero for temp-only commands.)
+  //   status[18] = ((encode_mode << 1) | 1) << 4 | 0x0C   (power on + mode)
+  //   status[18] = 0x04                                    (OFF sentinel)
+  //   status[18] = 0x00                                    (temp-only)
   //
-  // Without status[16]=0x01 / status[17]=0x01 / the [31..35] envelope,
-  // the AC silently ignores mode changes -- which was the cause of the
-  // observed "FAN_ONLY worked but switching to COOL did nothing" bug.
+  //   with encode_mode: FAN_ONLY=0, HEAT=1, COOL=2, DRY=3, AUTO=4, giving
+  //   the on-wire bytes 0x1C / 0x3C / 0x5C / 0x7C / 0x9C.
+  //
+  // The low nibble 0x0C (bits 2+3) is what asserts power-on; without it the
+  // AC shifts its mode register but never starts the compressor.
+  //
+  // REGRESSION NOTE: an earlier rewrite (c1609e9) used the historical
+  // mode-change-while-on frames (status[16]=0x01, status[17]=0x01,
+  // status[18]=mode<<4 plus a status[31..35] envelope 10 01 04 00 10).
+  // Those frames are ACKed (one beep) but never assert the power bit, so
+  // power-on from Home Assistant silently stopped working. The single-byte
+  // 0x?C encoding above is what actually powers the unit on from standby
+  // (verified on real hardware, see docs/PROTOCOL.md and
+  // tests/test_command_frames.py).
+  //
+  //   status[19] = (target << 1) | 1   (°C, or °F when use_fahrenheit_)
   // ---------------------------------------------------------------------
 
   std::vector<uint8_t> status{
@@ -228,52 +222,33 @@ void AirConditioner::send_status() {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  bool send_mode_envelope = false;
-
   // -----------------------------------------------------------------
-  // Mode change
+  // Mode change (also carries the power bits)
   // -----------------------------------------------------------------
   if (next_hvac_settings.mode != nullopt) {
     const auto requested_mode = next_hvac_settings.mode.value();
 
     if (requested_mode == climate::CLIMATE_MODE_OFF) {
-      // Historical OFF frame uses a different envelope; mirror it.
-      status[16] = 0x00;
-      status[17] = 0x01;
+      // OFF sentinel. Everything else in the frame stays zero.
       status[18] = 0x04;
-      status[31] = 0x00;
-      status[32] = 0x01;
-      status[33] = 0x55;
-      status[34] = 0x00;
-      status[35] = 0x01;
-      send_mode_envelope = true;
     } else {
-      // Mode-change command. status[16] = 0x01 for COOL/HEAT/DRY/AUTO,
-      // 0x07 for FAN_ONLY. Discriminator was reverse-engineered from
-      // the historical mode_fan / mode_cool / mode_heat / mode_dry
-      // frames in the original repo.
-      uint8_t mode_high_nibble = 0;
+      uint8_t encode_mode = 0;
       switch (requested_mode) {
       case climate::CLIMATE_MODE_FAN_ONLY:
-        status[16] = 0x07;
-        mode_high_nibble = 0x1;
+        encode_mode = 0;
         break;
       case climate::CLIMATE_MODE_HEAT:
-        status[16] = 0x01;
-        mode_high_nibble = 0x3;
+        encode_mode = 1;
         break;
       case climate::CLIMATE_MODE_COOL:
-        status[16] = 0x01;
-        mode_high_nibble = 0x5;
+        encode_mode = 2;
         break;
       case climate::CLIMATE_MODE_DRY:
-        status[16] = 0x01;
-        mode_high_nibble = 0x7;
+        encode_mode = 3;
         break;
       case climate::CLIMATE_MODE_AUTO:
       case climate::CLIMATE_MODE_HEAT_COOL:
-        status[16] = 0x01;
-        mode_high_nibble = 0x9;
+        encode_mode = 4;
         break;
       default:
         ESP_LOGW(TAG, "Unsupported climate mode requested: %d",
@@ -281,16 +256,8 @@ void AirConditioner::send_status() {
         this->next_hvac_settings_ = nullopt;
         return;
       }
-      status[17] = 0x01;
-      status[18] = mode_high_nibble << 4;
-
-      // Mode-change command envelope (status[31..35]).
-      status[31] = 0x10;
-      status[32] = 0x01;
-      status[33] = 0x04;
-      status[34] = 0x00;
-      status[35] = 0x10;
-      send_mode_envelope = true;
+      // Mode + power-on bits packed into one byte (see header comment).
+      status[18] = static_cast<uint8_t>((((encode_mode << 1) | 1) << 4) | 0x0C);
 
       // Mode-only call from HA carries no target temperature. Re-use the
       // current setpoint, falling back to a safe default if it has never
@@ -320,8 +287,18 @@ void AirConditioner::send_status() {
       this->next_hvac_settings_ = nullopt;
       return;
     }
-    const uint8_t my_tmp = static_cast<uint8_t>(requested);
-    status[19] = static_cast<uint8_t>((my_tmp << 1) | 0x01);
+    // AEH-W4A1 units come in two variants: most speak Celsius natively,
+    // some (US-market) expect Fahrenheit on the wire. See PR #11 upstream
+    // (pslawinski/esphome_airconintl). HA always works in °C, so convert
+    // on the way out when the Fahrenheit variant is configured.
+    uint8_t wire_temp;
+    if (this->use_fahrenheit_) {
+      wire_temp = static_cast<uint8_t>(
+          std::lround(requested * 9.0f / 5.0f + 32.0f));
+    } else {
+      wire_temp = static_cast<uint8_t>(requested);
+    }
+    status[19] = static_cast<uint8_t>((wire_temp << 1) | 0x01);
   }
 
   // -----------------------------------------------------------------
@@ -351,8 +328,6 @@ void AirConditioner::send_status() {
   // Display LED (status[36])
   // -----------------------------------------------------------------
   status[36] = display_enable ? 0b11000000 : 0b01000000;
-
-  (void)send_mode_envelope;  // Reserved for future per-frame-type logging.
 
   send_raw(status);
   this->next_hvac_settings_ = nullopt;
@@ -535,8 +510,8 @@ void AirConditioner::dump_config() {
 }
 
 void AirConditioner::send_raw(const std::vector<uint8_t> &payload) {
-  // Add F4 F5 at start
-
+  // payload includes the leading F4 F5 header; checksum and F4 FB footer
+  // are appended here.
   if (payload.empty()) {
     return;
   }
@@ -547,9 +522,29 @@ void AirConditioner::send_raw(const std::vector<uint8_t> &payload) {
   if (this->flow_control_pin_ != nullptr)
     this->flow_control_pin_->digital_write(true);
 
-  this->write_array(payload);
+  // Byte-stuffing on TX: every literal 0xF4 inside the body AND inside the
+  // two checksum bytes is transmitted as F4 F4 (adopted from upstream
+  // pslawinski messages.h, whose on-wire templates pre-stuff - e.g.
+  // temp_16_C's 0x01F4 checksum goes out as 01 F4 F4 F4 FB). The AC
+  // de-stuffs on receive; without this a frame like a 16 °C setpoint
+  // (checksum low byte 0xF4) collides with the F4 FB footer marker.
+  // Header F4 F5 and footer F4 FB are sent unstuffed.
+  this->write_byte(0xF4);
+  this->write_byte(0xF5);
+  for (size_t i = 2; i < payload.size(); i++) {
+    this->write_byte(payload[i]);
+    if (payload[i] == 0xF4) {
+      this->write_byte(0xF4);
+    }
+  }
   this->write_byte(cr1);
+  if (cr1 == 0xF4) {
+    this->write_byte(0xF4);
+  }
   this->write_byte(cr2);
+  if (cr2 == 0xF4) {
+    this->write_byte(0xF4);
+  }
   this->write_byte(0xF4);
   this->write_byte(0xFB);
   this->flush();
@@ -560,7 +555,6 @@ void AirConditioner::send_raw(const std::vector<uint8_t> &payload) {
 
   last_send_ = millis();
 }
-
 short int AirConditioner::checksum(const std::vector<uint8_t> &payload) {
   short int csum = 0;
   int arrlen = payload.size();
@@ -612,7 +606,11 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
   // Target temp
   {
     auto temp = payload[17];
-    this->target_temperature = temp;
+    // Fahrenheit-variant units report °F on the wire (upstream PR #11);
+    // HA works in °C, so convert on the way in.
+    this->target_temperature = this->use_fahrenheit_
+                                   ? (temp - 32.0f) * 5.0f / 9.0f
+                                   : static_cast<float>(temp);
   }
 
   // Fan speed
@@ -645,19 +643,25 @@ void AirConditioner::decode_message(std::vector<uint8_t> payload) {
 
 #ifdef USE_SENSOR
   {
+    // Fahrenheit-variant units report all temperatures as °F (upstream
+    // PR #11); convert to °C for HA when configured.
+    auto wire_to_c = [this](uint8_t v) -> float {
+      return this->use_fahrenheit_ ? (v - 32.0f) * 5.0f / 9.0f
+                                   : static_cast<float>(v);
+    };
     update_sub_sensor_(SubSensorType::INDOOR_TEMPERATURE,
-                       static_cast<float>(payload[18]));
+                       wire_to_c(payload[18]));
     update_sub_sensor_(SubSensorType::INDOOR_COIL_TEMPERATURE,
-                       static_cast<float>(payload[19]));
+                       wire_to_c(payload[19]));
     // NOTE: payload[21] is always 0x80 on observed Hisense status frames;
     // it is a flag byte, not humidity. Indoor humidity is not exposed by
     // this protocol. The INDOOR_HUMIDITY sub-sensor has been removed.
     // Outdoor temperatures live in the body[42..45] block on observed
     // 76-byte status payloads (40/41 are zeros).
     update_sub_sensor_(SubSensorType::OUTDOOR_TEMPERATURE,
-                       static_cast<float>(payload[42]));
+                       wire_to_c(payload[42]));
     update_sub_sensor_(SubSensorType::OUTDOOR_COIL_TEMPERATURE,
-                       static_cast<float>(payload[43]));
+                       wire_to_c(payload[43]));
   }
 #endif
 
