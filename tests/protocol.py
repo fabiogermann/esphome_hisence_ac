@@ -1,7 +1,7 @@
 """Pure-Python port of the Hisense AC UART protocol.
 
 This module is the executable specification used by the test suite. It mirrors
-the logic in ``hisense/air_conditioner.cpp`` so we can
+the logic in ``component/air_conditioner.cpp`` so we can
 exercise the algorithm without flashing firmware.
 
 Frame layout (all integers big-endian)::

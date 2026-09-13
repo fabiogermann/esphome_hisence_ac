@@ -36,10 +36,10 @@ reused for the AC UART on the ESP-01.
    ```yaml
    external_components:
      - source: github://fabiogermann/esphome_hisence_ac
-       components: [hisense]
+       components: [component]
    ```
 
-   (The component lives at the top level of this repo as `hisense/`.)
+   (The component lives at the top level of this repo as `component/`; the YAML platform name is `component`.)
 
 2. Use [`docs/sampleconfig.yaml`](docs/sampleconfig.yaml) as a starting
    point. Adjust Wi-Fi credentials, API key, and OTA password.

@@ -1,7 +1,7 @@
 # Test suite
 
 Pure-Python tests for the Hisense AC UART protocol. They mirror the algorithm
-in `hisense/air_conditioner.cpp` and run in milliseconds —
+in `component/air_conditioner.cpp` and run in milliseconds —
 no hardware, no ESPHome runtime required.
 
 ## Layout
