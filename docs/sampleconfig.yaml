@@ -1,15 +1,15 @@
 # External Components
-# In this repo the component lives at the top level (component/), so the
+# In this repo the component lives at the top level (hisense_ac/), so the
 # local path points one directory up from this file. When you copy this
 # config into your own ESPHome setup, use the git source instead:
 #   external_components:
 #     - source: github://fabiogermann/esphome_hisence_ac
-#       components: [component]
+#       components: [hisense_ac]
 external_components:
   - source:
       type: local
       path: ..
-    components: [component]
+    components: [hisense_ac]
 
 esphome:
   name: acremote01
@@ -90,7 +90,7 @@ uart:
   #         UARTDebug::log_hex(direction, bytes, ' ');
 
 climate:
-  - platform: component
+  - platform: hisense_ac
     name: Hisense
     uart_id: ac_uart
     id: hisense_ac
@@ -99,25 +99,25 @@ climate:
     # use_fahrenheit: false
 
 sensor:
-  - platform: component
+  - platform: hisense_ac
     hisense_id: hisense_ac
     indoor_coil_temperature:
       name: Indoor Coil Temperature
-  - platform: component
+  - platform: hisense_ac
     hisense_id: hisense_ac
     outdoor_coil_temperature:
       name: Outdoor Coil Temperature
-  - platform: component
+  - platform: hisense_ac
     hisense_id: hisense_ac
     indoor_temperature:
       name: Indoor Temperature
-  - platform: component
+  - platform: hisense_ac
     hisense_id: hisense_ac
     outdoor_temperature:
       name: Outdoor Temperature
 
 switch:
-  - platform: component
+  - platform: hisense_ac
     hisense_id: hisense_ac
     hisens_display:
       name: Hisens Display Enable

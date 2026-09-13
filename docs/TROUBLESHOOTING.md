@@ -77,7 +77,7 @@ The defaults err on the patient side:
 - `COMM_TIMEOUT_MS = 5000` — give up on an in-flight query after 5 s.
 - Backoff escalates `2 → 4 → 7 → 10` seconds with consecutive failures.
 
-These are constants in `component/air_conditioner.h` if you
+These are constants in `hisense_ac/air_conditioner.h` if you
 need to tune them for a different unit.
 
 ## Symptom: sensors stuck at 0

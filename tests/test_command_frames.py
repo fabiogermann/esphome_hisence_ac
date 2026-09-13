@@ -2,7 +2,7 @@
 
 Mode and power are packed into the SINGLE byte ``status[18]``; there is no
 command discriminator and no status[31..35] envelope. The encoding (see
-``component/air_conditioner.cpp::send_status``):
+``hisense_ac/air_conditioner.cpp::send_status``):
 
     power-on + mode : ((encode_mode << 1) | 1) << 4 | 0x0C
     OFF              : 0x04
