@@ -23,7 +23,7 @@ owner-confirmed wire map, socket taps, and board-specific checks.
 > A bare ESP-01 must not receive 5 V directly. Some AC connectors expose TTL
 > TX/RX, while others expose RS485 A/B; verify the actual unit rather than
 > treating those interfaces as interchangeable. The older
-> [connector photograph](AC%20connector.jpg) is retained for reference, not
+> [connector photograph](docs/AC%20connector.jpg) is retained for reference, not
 > as a universal pinout.
 
 Logging is over Wi-Fi only (`logger: baud_rate: 0`) because GPIO1/GPIO3 are
@@ -35,19 +35,19 @@ reused for the AC UART on the ESP-01.
 
    ```yaml
    external_components:
-     - source:
-         type: local
-         path: components
+     - source: github://fabiogermann/esphome_hisence_ac
        components: [hisense]
    ```
 
-2. Use [`esphome/sampleconfig.yaml`](esphome/sampleconfig.yaml) as a starting
+   (The component lives at the top level of this repo as `hisense/`.)
+
+2. Use [`docs/sampleconfig.yaml`](docs/sampleconfig.yaml) as a starting
    point. Adjust Wi-Fi credentials, API key, and OTA password.
 
 3. Flash and watch the Wi-Fi logs:
 
    ```
-   esphome run esphome/sampleconfig.yaml
+   esphome run docs/sampleconfig.yaml
    ```
 
 ## Development
@@ -59,14 +59,14 @@ bugs can be fixed without flashing hardware.
 ```bash
 make venv         # create .venv with pytest + esphome
 make test         # run the test suite
-make config       # validate esphome/sampleconfig.yaml
+make config       # validate docs/sampleconfig.yaml
 make compile      # full firmware build (no upload)
 make help         # list every target
 ```
 
-The `output.txt` file in this repo is a live capture from a Hisense unit and
-is referenced by the tests as the source of truth for what the firmware sees
-on the wire.
+The [`docs/output.txt`](docs/output.txt) file in this repo is a live capture
+from a Hisense unit and is referenced by the tests as the source of truth for
+what the firmware sees on the wire.
 
 ## Documentation
 

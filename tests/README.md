@@ -1,7 +1,7 @@
 # Test suite
 
 Pure-Python tests for the Hisense AC UART protocol. They mirror the algorithm
-in `esphome/components/hisense/air_conditioner.cpp` and run in milliseconds —
+in `hisense/air_conditioner.cpp` and run in milliseconds —
 no hardware, no ESPHome runtime required.
 
 ## Layout
@@ -16,7 +16,7 @@ no hardware, no ESPHome runtime required.
 | `test_encoding.py`         | Mode / temp / swing / fan-speed encode-decode round-trips. |
 | `test_climate_state.py`    | Decoded climate state from real captured frames — what Home Assistant *should* see. |
 | `test_streaming_parser.py` | Resync-safe streaming parser — the **HA-init bug** lives here. |
-| `test_config.py`           | Compile-only validation of `esphome/sampleconfig.yaml` (skipped if the `esphome` CLI isn't installed). |
+| `test_config.py`           | Compile-only validation of `docs/sampleconfig.yaml` (skipped if the `esphome` CLI isn't installed). |
 
 ## Running
 

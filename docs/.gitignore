@@ -1,0 +1,3 @@
+# Gitignore settings for the ESPHome config dir (sampleconfig.yaml lives here)
+/.esphome/
+/secrets.yaml

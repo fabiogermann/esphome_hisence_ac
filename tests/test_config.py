@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_CONFIG = REPO_ROOT / "esphome" / "sampleconfig.yaml"
+SAMPLE_CONFIG = REPO_ROOT / "docs" / "sampleconfig.yaml"
 
 
 @pytest.fixture(scope="module")

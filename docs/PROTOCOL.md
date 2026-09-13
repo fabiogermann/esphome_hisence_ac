@@ -4,7 +4,7 @@ UART protocol used by Hisense AEH-W4A1 / AEH-W4B1 Wi-Fi modules.
 
 - **Baud rate:** 9600 8N1
 - **Endianness:** big-endian (most-significant byte first)
-- **Reference implementation:** [`esphome/components/hisense/air_conditioner.cpp`](../esphome/components/hisense/air_conditioner.cpp)
+- **Reference implementation:** [`hisense/air_conditioner.cpp`](../hisense/air_conditioner.cpp)
 - **Executable spec:** [`tests/protocol.py`](../tests/protocol.py)
 
 ## Frame format

@@ -5,7 +5,7 @@ PYTHON     := $(VENV)/bin/python
 PIP        := $(VENV)/bin/pip
 PYTEST     := $(VENV)/bin/pytest
 ESPHOME    := $(VENV)/bin/esphome
-CONFIG     := esphome/sampleconfig.yaml
+CONFIG     := docs/sampleconfig.yaml
 
 help: ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
