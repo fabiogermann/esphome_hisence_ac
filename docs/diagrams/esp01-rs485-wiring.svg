@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1810" height="1210" viewBox="0 0 1810 1210" role="img" aria-labelledby="title description">
+  <title id="title">ESP-01 carrier and RS485: confirmed external wiring</title>
+  <desc id="description">Eight owner-confirmed external wire connections. Incoming red 5 V and brown ground go to the carrier header. Yellow TX and grey RX connect to converter TXD and RXD. White and black power taps originate at the ESP socket, pins 8 and 1. Brown data goes to B-minus and orange data to A-plus. Board positions are functional, not physical pin placement.</desc>
+  <rect x="0" y="0" width="1810" height="1210" rx="0" fill="#f4f8fb" stroke="#f4f8fb" stroke-width="2" />
+  <text x="50" y="35" fill="#163047" font-size="42" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">ESP-01 carrier + RS485 converter</text>
+  <text x="50" y="100" fill="#4b6478" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Confirmed external wiring | Functional layout, not physical pin placement</text>
+  <rect x="50" y="170" width="310" height="860" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <rect x="650" y="170" width="430" height="650" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <rect x="1430" y="170" width="330" height="650" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="75" y="195" fill="#163047" font-size="29" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">AC accessory cable</text>
+  <text x="675" y="195" fill="#163047" font-size="29" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">ESP carrier</text>
+  <text x="1450" y="195" fill="#163047" font-size="29" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">RS485-to-TTL</text>
+  <text x="75" y="245" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Four conductors</text>
+  <text x="675" y="245" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Header + ESP socket</text>
+  <text x="1450" y="245" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Converter module</text>
+  <text x="75" y="302" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Red / +5 V</text>
+  <text x="75" y="382" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Brown / ground</text>
+  <text x="675" y="302" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Header VCC input</text>
+  <text x="675" y="382" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Header GND input</text>
+  <polyline fill="none" stroke="#c83b40" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="360,330 650,330" id="H-5V" data-from="AC cable +5 V" data-to="Carrier header VCC" data-wire-color="red" />
+  <circle cx="360" cy="330" r="5" fill="#163047" />
+  <circle cx="650" cy="330" r="5" fill="#163047" />
+  <text x="505" y="290" fill="#4b6478" font-size="21" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">H-5V</text>
+  <polyline fill="none" stroke="#8b542b" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="360,410 650,410" id="H-GND" data-from="AC cable ground" data-to="Carrier header GND" data-wire-color="brown" />
+  <circle cx="360" cy="410" r="5" fill="#163047" />
+  <circle cx="650" cy="410" r="5" fill="#163047" />
+  <text x="505" y="370" fill="#4b6478" font-size="21" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">H-GND</text>
+  <text x="675" y="445" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Header TX</text>
+  <text x="1450" y="445" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">TXD</text>
+  <polyline fill="none" stroke="#c59100" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1080,470 1430,470" id="J-TXD" data-from="Carrier header TX" data-to="Converter TXD" data-wire-color="yellow" />
+  <circle cx="1080" cy="470" r="5" fill="#163047" />
+  <circle cx="1430" cy="470" r="5" fill="#163047" />
+  <text x="1255" y="431" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">J-TXD / Yellow</text>
+  <text x="675" y="525" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Header RX</text>
+  <text x="1450" y="525" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">RXD</text>
+  <polyline fill="none" stroke="#78838d" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1080,550 1430,550" id="J-RXD" data-from="Carrier header RX" data-to="Converter RXD" data-wire-color="grey" />
+  <circle cx="1080" cy="550" r="5" fill="#163047" />
+  <circle cx="1430" cy="550" r="5" fill="#163047" />
+  <text x="1255" y="511" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">J-RXD / Grey</text>
+  <text x="675" y="605" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Socket VCC (pin 8*)</text>
+  <text x="1450" y="605" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">VCC</text>
+  <polyline fill="none" stroke="#536575" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" points="1080,630 1430,630" />
+  <polyline fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1080,630 1430,630" id="J-VCC" data-from="Carrier socket VCC pin 8" data-to="Converter VCC" data-wire-color="white" />
+  <circle cx="1080" cy="630" r="5" fill="#163047" />
+  <circle cx="1430" cy="630" r="5" fill="#163047" />
+  <text x="1255" y="591" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">J-VCC / White</text>
+  <text x="675" y="685" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Socket GND (pin 1*)</text>
+  <text x="1450" y="685" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">GND</text>
+  <polyline fill="none" stroke="#202c36" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1080,710 1430,710" id="J-GND" data-from="Carrier socket GND pin 1" data-to="Converter GND" data-wire-color="black" />
+  <circle cx="1080" cy="710" r="5" fill="#163047" />
+  <circle cx="1430" cy="710" r="5" fill="#163047" />
+  <text x="1255" y="671" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">J-GND / Black</text>
+  <text x="675" y="665" fill="#12617a" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Nominal 3.3 V socket rail</text>
+  <text x="675" y="765" fill="#12617a" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">ESP-01 plugs into this socket</text>
+  <text x="75" y="875" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Brown / data B-</text>
+  <text x="75" y="955" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Orange / data A+</text>
+  <text x="1550" y="775" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="middle">B-</text>
+  <text x="1690" y="775" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="middle">A+</text>
+  <polyline fill="none" stroke="#8b542b" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="360,910 1550,910 1550,820" id="H-B" data-from="AC cable B-" data-to="Converter B-" data-wire-color="brown" />
+  <circle cx="360" cy="910" r="5" fill="#163047" />
+  <circle cx="1550" cy="820" r="5" fill="#163047" />
+  <polyline fill="none" stroke="#dc701a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="360,990 1690,990 1690,820" id="H-A" data-from="AC cable A+" data-to="Converter A+" data-wire-color="orange" />
+  <circle cx="360" cy="990" r="5" fill="#163047" />
+  <circle cx="1690" cy="820" r="5" fill="#163047" />
+  <text x="850" y="870" fill="#4b6478" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">H-B / Brown data conductor (not ground)</text>
+  <text x="850" y="950" fill="#4b6478" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">H-A / Orange data conductor</text>
+  <text x="50" y="1060" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">White + black: soldered to ESP socket pads, NOT carrier input VCC/GND.</text>
+  <text x="50" y="1104" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">* Socket numbers follow the owner's mapping. Internal regulation and UART translation are not drawn.</text>
+  <text x="50" y="1145" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">3.3 V is the intended supply, not a measurement. Verify board ratings and isolation before reproducing.</text>
+</svg>

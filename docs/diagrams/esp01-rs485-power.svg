@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1810" height="870" viewBox="0 0 1810 870" role="img" aria-labelledby="title description">
+  <title id="title">ESP-01 carrier and RS485: functional power distribution</title>
+  <desc id="description">Incoming 5 V feeds the carrier supply circuitry. Its nominal 3.3 V ESP socket supply powers both the ESP-01 and the RS485 converter. Converter VCC is connected by a white wire at socket pin 8. Ground return is via socket pin 1 and the black wire. Internal circuitry, actual voltage and available current are unverified.</desc>
+  <rect x="0" y="0" width="1810" height="870" rx="0" fill="#f4f8fb" stroke="#f4f8fb" stroke-width="2" />
+  <text x="50" y="35" fill="#163047" font-size="40" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">Power distribution: one shared socket supply</text>
+  <text x="50" y="100" fill="#4b6478" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Functional power flow | Carrier circuitry is not a component-level schematic</text>
+  <rect x="50" y="280" width="300" height="150" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="75" y="305" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">AC accessory supply</text>
+  <text x="75" y="365" fill="#163047" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">+5 V / red wire</text>
+  <rect x="530" y="280" width="430" height="150" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="555" y="305" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">Carrier supply circuitry</text>
+  <text x="555" y="365" fill="#4b6478" font-size="21" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Implementation / rating unverified</text>
+  <rect x="1120" y="280" width="290" height="150" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="1145" y="305" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">ESP socket VCC</text>
+  <text x="1145" y="365" fill="#163047" font-size="23" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Pin 8* / nominal 3.3 V</text>
+  <rect x="1550" y="160" width="220" height="140" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="1575" y="185" fill="#163047" font-size="29" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">ESP-01</text>
+  <text x="1575" y="240" fill="#4b6478" font-size="21" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Socketed module</text>
+  <rect x="1550" y="500" width="220" height="140" rx="15" fill="white" stroke="#abc3d2" stroke-width="2" />
+  <text x="1575" y="525" fill="#163047" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">RS485 board</text>
+  <text x="1575" y="580" fill="#163047" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Converter VCC</text>
+  <polyline fill="none" stroke="#c83b40" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="350,355 530,355" />
+  <circle cx="350" cy="355" r="5" fill="#163047" />
+  <circle cx="530" cy="355" r="5" fill="#163047" />
+  <text x="440" y="310" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="middle">5 V input</text>
+  <polyline fill="none" stroke="#12617a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="960,355 1120,355" />
+  <circle cx="960" cy="355" r="5" fill="#163047" />
+  <circle cx="1120" cy="355" r="5" fill="#163047" />
+  <polyline fill="none" stroke="#12617a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1410,355 1480,355 1480,230 1550,230" />
+  <circle cx="1410" cy="355" r="5" fill="#163047" />
+  <circle cx="1550" cy="230" r="5" fill="#163047" />
+  <polyline fill="none" stroke="#536575" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" points="1480,355 1480,570 1550,570" />
+  <polyline fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" points="1480,355 1480,570 1550,570" />
+  <circle cx="1480" cy="355" r="5" fill="#163047" />
+  <circle cx="1550" cy="570" r="5" fill="#163047" />
+  <text x="1455" y="465" fill="#4b6478" font-size="21" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="end">White tap</text>
+  <rect x="50" y="505" width="1330" height="135" rx="15" fill="#e8f1f6" stroke="#abc3d2" stroke-width="2" />
+  <text x="75" y="528" fill="#163047" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700" dominant-baseline="text-before-edge" text-anchor="start">The carrier supplies BOTH loads.</text>
+  <text x="75" y="579" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">The converter is not externally wired to the incoming +5 V rail.</text>
+  <text x="50" y="690" fill="#163047" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">Ground return: carrier input GND; ESP socket GND (pin 1*); black wire to converter GND.</text>
+  <text x="50" y="738" fill="#4b6478" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">3.3 V at the socket does not establish the voltage of the carrier's external TX/RX header.</text>
+  <text x="50" y="788" fill="#4b6478" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="400" dominant-baseline="text-before-edge" text-anchor="start">* Owner-identified socket pins. Actual voltage, supply capacity and internal board routing are unverified.</text>
+</svg>

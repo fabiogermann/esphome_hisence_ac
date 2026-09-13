@@ -11,17 +11,20 @@ Wi-Fi modules).
 
 ## Hardware
 
-I'm using an ESP-8266 NodeMCU (or ESP-01) wired directly to the AC's onboard
-Wi-Fi-module connector.
+The documented RS485 assembly uses an **ESP-01 on an active carrier board**
+and an **RS485-to-TTL converter**. The AC's +5 V feeds the carrier input;
+the converter takes its nominal 3.3 V supply from the carrier's ESP socket.
 
-![AC connector pinout](AC%20connector.jpg)
+See **[hardware wiring and power drawings](docs/HARDWARE.md)** for the
+owner-confirmed wire map, socket taps, and board-specific checks.
 
-| Pin | Function          |
-|-----|-------------------|
-| 1   | VCC (5 V from AC) |
-| 2   | RX → ESP TX       |
-| 3   | TX → ESP RX       |
-| 4   | GND               |
+![ESP-01 carrier and RS485 wiring](docs/diagrams/esp01-rs485-wiring.png)
+
+> A bare ESP-01 must not receive 5 V directly. Some AC connectors expose TTL
+> TX/RX, while others expose RS485 A/B; verify the actual unit rather than
+> treating those interfaces as interchangeable. The older
+> [connector photograph](AC%20connector.jpg) is retained for reference, not
+> as a universal pinout.
 
 Logging is over Wi-Fi only (`logger: baud_rate: 0`) because GPIO1/GPIO3 are
 reused for the AC UART on the ESP-01.
@@ -67,6 +70,8 @@ on the wire.
 
 ## Documentation
 
+- [`docs/HARDWARE.md`](docs/HARDWARE.md) — ESP-01 carrier/RS485 wiring,
+  socket power taps, and editable drawings.
 - [`docs/PROTOCOL.md`](docs/PROTOCOL.md) — wire format, byte layout, encoding
   tables.
 - [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) — known bugs and
