@@ -9,12 +9,13 @@ from esphome.const import (
     CONF_FLOW_CONTROL_PIN,
     CONF_ID,
     CONF_ADDRESS,
-    CONF_DISABLE_CRC,
     CONF_DISPLAY,
 )
 from esphome import pins
 from pprint import pprint
 from ..climate import CONF_HISENSE_ID, hisense_ac_ns, AirConditioner
+
+CONF_DISABLE_CRC = "disable_crc"
 
 AirConditionSwitch = hisense_ac_ns.class_(
     "AirConditionSwitch",

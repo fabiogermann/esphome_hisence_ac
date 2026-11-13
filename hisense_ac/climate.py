@@ -9,12 +9,13 @@ from esphome.const import (
     CONF_FLOW_CONTROL_PIN,
     CONF_ID,
     CONF_ADDRESS,
-    CONF_DISABLE_CRC,
     CONF_DISPLAY,
 )
 from esphome import pins
 
 DEPENDENCIES = ["climate", "uart"]
+
+CONF_DISABLE_CRC = "disable_crc"
 
 hisense_ac_ns = cg.esphome_ns.namespace("hisense").namespace("ac")
 AirConditioner = hisense_ac_ns.class_(
